@@ -812,14 +812,67 @@ async function postJson(body) {
 }
 
 /**
- * GET t=edit for one entry. Never rejects, and remembers its outcome on the
- * promise itself so runStylist can show the picks at once when it is done.
+ * One GET t=edit. Never rejects. A real backend answer comes back as parsed
+ * JSON; anything that is not an answer (network error, aborted request,
+ * non-2xx status, unparseable body) comes back as {ok:false, transport:true}.
+ */
+async function fetchEditOnce(id) {
+  try {
+    const r = await fetch(`${CFG.backend}?k=${encodeURIComponent(CFG.backendKey)}&t=edit&id=${encodeURIComponent(id)}`, { redirect: "follow" });
+    if (!r.ok) return { ok: false, transport: true, error: "HTTP " + r.status };
+    const j = await r.json();
+    if (!j || typeof j !== "object") return { ok: false, transport: true, error: "bad json" };
+    return j;
+  } catch (e) {
+    return { ok: false, transport: true, error: String((e && e.message) || e) };
+  }
+}
+
+// Delays before retry 1..4. The backend keeps running the model even when the
+// client's request dies (phone screen off, tab in background, network switch)
+// and stores the result, so a later call for the same id is cheap and very
+// likely to succeed. Five attempts spread over about half a minute cover a
+// full model run without hammering the endpoint.
+const EDIT_RETRY_DELAYS_MS = [2000, 4000, 8000, 15000];
+
+/** True when j is a real answer from the backend that must not be retried. */
+function isFinalEditAnswer(j, state) {
+  if (!j || j.transport) return false;                       // transport problem: retry
+  if (j.ok === false && j.status === undefined) {            // server said no, but gave no verdict: retry once
+    if (state.softRetried) return true;
+    state.softRetried = true;
+    return false;
+  }
+  return true;                                               // ok:true (done / skipped / failed) or ok:false with a status
+}
+
+/**
+ * GET t=edit for one entry, with bounded retries. Never rejects, and remembers
+ * its outcome on the promise itself so runStylist can show the picks at once
+ * when it is done. p.state exposes the retry loop so the visibilitychange
+ * handler can wake it up early when the page comes back to the foreground.
  */
 function fetchEdit(id) {
-  const p = fetch(`${CFG.backend}?k=${encodeURIComponent(CFG.backendKey)}&t=edit&id=${encodeURIComponent(id)}`, { redirect: "follow" })
-    .then(r => r.json())
-    .catch(e => ({ ok: false, error: String((e && e.message) || e) }));
+  const state = { id, attempt: 0, inFlight: false, done: false, cancelled: false, softRetried: false, wake: null };
+  const p = (async () => {
+    let last = null;
+    for (;;) {
+      state.attempt++;
+      state.inFlight = true;
+      last = await fetchEditOnce(id);
+      state.inFlight = false;
+      if (state.cancelled || isFinalEditAnswer(last, state)) break;
+      if (state.attempt > EDIT_RETRY_DELAYS_MS.length) break;     // that was the last attempt
+      const delay = EDIT_RETRY_DELAYS_MS[state.attempt - 1];
+      await new Promise(res => { state.wake = res; setTimeout(res, delay); });   // wake() cuts the backoff short
+      state.wake = null;
+      if (state.cancelled) break;
+    }
+    state.done = true;
+    return last;
+  })();
   p.id = id;
+  p.state = state;
   p.then(j => { p.result = j; });
   return p;
 }
@@ -833,6 +886,7 @@ function discardEntry(id) {
 /** Retake: drops the earlier upload and its portrait before the new selfie goes through step 1 again. */
 function dropEntry() {
   if (entryId) discardEntry(entryId);
+  if (editPromise && editPromise.state) editPromise.state.cancelled = true;   // stop retrying for the dropped row
   entryId = null; entryPromise = null; editPromise = null;
   entrySeq++;
   $("selfieWorking").hidden = true;
@@ -957,26 +1011,91 @@ function startStylistLines() {
 }
 function stopStylistLines() { if (stylistTimer) { clearInterval(stylistTimer); stylistTimer = null; } }
 
+let stylistSettled = false;   // picks shown or edit skipped, nothing left to fetch
+let stylistResumes = 0;       // fresh attempts started by visibilitychange after the chain gave up
+
+/** Puts the stylist box back into its waiting look after a busy message. */
+function clearStylistFailure() {
+  document.querySelector(".stylist-bar").hidden = false;
+  $("stylistStatus").classList.remove("is-failed");
+}
+
+/** Final fallback, shown only once every attempt has been used up. */
+function showStylistBusy() {
+  stopStylistLines();
+  document.querySelector(".stylist-bar").hidden = true;
+  const st = $("stylistStatus");
+  st.textContent = t("stylist.busy");
+  st.classList.add("is-failed");
+}
+
+/**
+ * Applies a t=edit answer to the UI. Returns true when the stylist is settled
+ * (portrait shown or edit skipped), false when the answer was not usable.
+ */
+function applyEditResult(id, j) {
+  if (stylistSettled) return true;
+  if (j && j.ok && j.status === "done" && j.edited) {
+    stylistSettled = true;
+    clearStylistFailure();
+    showPicks(id, j.orig, j.edited);
+    return true;
+  }
+  if (j && j.ok && j.status === "skipped") {
+    stylistSettled = true;
+    stopStylistLines();
+    $("stylist").hidden = true;
+    return true;
+  }
+  return false;
+}
+
 async function runStylist(id) {
   $("stylist").hidden = false;
   // The edit normally started when the selfie was taken, so wait for that promise.
   // Only fetch here when there is none, which is the reload path where the backend
   // answers at once with the stored result.
   const p = (editPromise && editPromise.id === id) ? editPromise : fetchEdit(id);
+  editPromise = p;   // so resumeStylist() can find the chain on the reload path too
   if (!p.result) startStylistLines();   // nothing to animate when the portrait is already here
   try {
-    const j = p.result || await p;
-    if (j.ok && j.status === "done" && j.edited) { showPicks(id, j.orig, j.edited); return; }
-    if (j.ok && j.status === "skipped") { stopStylistLines(); $("stylist").hidden = true; return; }
-    throw new Error((j && j.error) || "no result");
+    const j = p.result || await p;      // the wait lines keep rotating while fetchEdit retries
+    if (id !== entryId) return;         // superseded meanwhile
+    if (!applyEditResult(id, j)) showStylistBusy();
   } catch (e) {
-    stopStylistLines();
-    document.querySelector(".stylist-bar").hidden = true;
-    const st = $("stylistStatus");
-    st.textContent = t("stylist.busy");
-    st.classList.add("is-failed");
+    showStylistBusy();
   }
 }
+
+/**
+ * Page came back to the foreground. Mobile browsers drop or freeze a long
+ * fetch while the screen is off or the tab is in the background, so give the
+ * stylist another go right away instead of waiting out the backoff, and even
+ * after the chain has given up, since the backend has most likely stored the
+ * portrait by now. Never runs two chains at once.
+ */
+function resumeStylist() {
+  if (stylistSettled || !entryId || !CFG.backend || $("thanks").hidden) return;
+  const p = editPromise;
+  if (p && p.id === entryId && p.state) {
+    if (!p.state.done) {                                 // chain still running: shorten the current backoff only
+      if (!p.state.inFlight && p.state.wake) p.state.wake();
+      return;
+    }
+    const j = p.result;
+    if (j && j.ok && j.status !== undefined && !j.transport) return;   // real verdict (e.g. failed): nothing to resume
+  }
+  if (stylistResumes >= 3) return;                       // bounded, the guest can still reload
+  stylistResumes++;
+  const id = entryId;
+  const fresh = fetchEdit(id);
+  editPromise = fresh;
+  fresh.then(j => { if (id === entryId && !$("thanks").hidden) applyEditResult(id, j); });
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") resumeStylist();
+});
 
 
 /* ---------- Lightbox for the fan wall ---------- */
