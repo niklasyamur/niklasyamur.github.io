@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Niklas & Yamur Fan Club</title>
+<title>Niklas & Yağmur Fan Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
 <style>
@@ -34,12 +34,18 @@
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--sage-700); outline-offset: 2px; }
   [hidden] { display: none !important; }
-  .kicker { font-family: var(--sans); font-size: .72rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--sage-700); }
+  .kicker { font-family: var(--sans); font-size: .72rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--sage-700); max-width: 100%; text-wrap: balance; overflow-wrap: anywhere; }
 
   /* Top bar, like the wedding site's dark hero band */
   .sign { background: var(--priory-900); color: var(--priory-100); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; }
-  .sign .eyebrow { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(246,244,239,.7); }
-  .sign .name { font-family: var(--serif); font-size: 1.35rem; font-weight: 500; color: #fff; line-height: 1.1; margin-top: 2px; }
+  /* The text block may shrink and wrap, the language switcher never does */
+  .sign .brand { flex: 1 1 auto; min-width: 0; }
+  .sign .eyebrow { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(246,244,239,.7); line-height: 1.3; text-wrap: balance; overflow-wrap: anywhere; }
+  .sign .name { font-family: var(--serif); font-size: clamp(1.15rem, 5vw, 1.35rem); font-weight: 500; color: #fff; line-height: 1.1; margin-top: 2px; text-wrap: balance; }
+  .langs { display: flex; gap: 5px; flex: 0 0 auto; flex-wrap: nowrap; }
+  .langs button { font-size: 1.05rem; line-height: 1; padding: 5px 7px; border-radius: 100px; border: 1px solid rgba(246,244,239,.28); background: transparent; cursor: pointer; opacity: .55; transition: opacity .15s, border-color .15s, background .15s; }
+  .langs button[aria-pressed="true"] { opacity: 1; border-color: rgba(246,244,239,.85); background: rgba(246,244,239,.14); }
+  .langs button:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
   .bullet { width: 36px; height: 36px; border-radius: 50%; background: var(--heart); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; font-family: var(--serif); font-size: 1.15rem; font-weight: 600; }
 
   main { max-width: 500px; margin: 0 auto; padding: 32px 20px 48px; }
@@ -54,12 +60,14 @@
   .badge { width: 196px; height: 196px; border-radius: 50%; background: #fff; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--hairline);
     box-shadow: var(--shadow-lg), inset 0 -10px 22px -14px rgba(43,39,34,.35), inset 0 6px 14px -10px rgba(255,255,255,.9); }
   .badge svg { width: 78%; height: 78%; display: block; }
-  .hero .kicker { margin-top: 6px; }
+  .hero .kicker { margin-top: 6px; padding: 0 4px; }
+  /* Centered grid items must still be allowed to shrink below their max-content width */
+  .hero > * { min-width: 0; max-width: 100%; }
   .hero h1 { font-size: clamp(2.4rem, 9vw, 3.1rem); font-weight: 400; }
   .hero p.lede { color: var(--ink); max-width: 36ch; font-size: 1.02rem; background: rgba(250,247,242,.78); padding: 8px 12px; border-radius: var(--radius); backdrop-filter: blur(2px); }
   .hero .flow { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; max-width: 34ch; }
   .hero .flow li { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--priory-800); background: rgba(250,247,242,.85); padding: 5px 11px 5px 5px; border-radius: 100px; backdrop-filter: blur(2px); }
-  .hero .flow li span { width: 19px; height: 19px; border-radius: 50%; background: var(--sage-500); color: var(--cream); display: grid; place-items: center; font-size: .68rem; font-weight: 700; flex: 0 0 auto; }
+  .hero .flow li .n { width: 19px; height: 19px; border-radius: 50%; background: var(--sage-500); color: var(--cream); display: grid; place-items: center; font-size: .68rem; font-weight: 700; flex: 0 0 auto; }
 
   /* Steps: numbered because they are a real sequence */
   .line { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
@@ -116,15 +124,16 @@
   .frame.has { border-style: solid; border-color: var(--hairline); padding: 0; }
 
   /* Vote chips, like the site's .choice */
-  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-  .chip { display: flex; align-items: center; gap: 10px; padding: 12px 12px; border-radius: var(--radius); border: 1px solid var(--priory-200); background: var(--cream); cursor: pointer; text-align: left; font-weight: 600; font-size: .9rem; line-height: 1.25; color: var(--priory-900); transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease; }
+  /* minmax(0, 1fr) keeps one long word in a label from widening its column at the other column's expense */
+  .chips { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 14px; }
+  .chip { display: flex; align-items: center; gap: 10px; padding: 12px 12px; min-width: 0; overflow-wrap: break-word; hyphens: manual; border-radius: var(--radius); border: 1px solid var(--priory-200); background: var(--cream); cursor: pointer; text-align: left; font-weight: 600; font-size: .9rem; line-height: 1.25; color: var(--priory-900); transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease; }
   .chip:hover { border-color: var(--priory-400); background: #fff; }
   .chip .ico { font-size: 1.2rem; line-height: 1; flex: 0 0 auto; }
   .chip[aria-pressed="true"] { border-color: var(--sage-500); background: var(--sage-100); box-shadow: 0 0 0 1px var(--sage-500); }
   .field { display: grid; gap: 6px; margin-top: 16px; }
   .field label { font-size: .875rem; font-weight: 600; color: var(--priory-800); }
   .field label .opt { font-weight: 400; color: var(--muted); }
-  .field input { padding: .75rem .9rem; border-radius: var(--radius); border: 1px solid var(--priory-200); background: #fff; color: var(--ink); width: 100%; }
+  .field input { padding: .75rem .9rem; border-radius: var(--radius); border: 1px solid var(--priory-200); background: #fff; color: var(--ink); width: 100%; text-overflow: ellipsis; }
   .field input:focus { outline: none; border-color: var(--sage-500); box-shadow: 0 0 0 1px var(--sage-500); }
   .err { color: var(--rose-ink); background: var(--rose-bg); border: 1px solid var(--rose-line); border-radius: var(--radius); padding: .6rem .9rem; font-size: .9rem; margin-top: 12px; }
 
@@ -202,19 +211,23 @@
 <body>
 
 <header class="sign" role="banner">
-  <div>
-    <div class="eyebrow">Fan club · est. 19 Sept 2026</div>
-    <div class="name">Niklas &amp; Yamur Fan Club</div>
+  <div class="brand">
+    <div class="eyebrow" data-t="hdr.eyebrow">Fan club · est. 19 Sept 2026</div>
+    <div class="name">Niklas &amp; Yağmur Fan Club</div>
   </div>
-  <span class="bullet" aria-hidden="true">♥</span>
+  <div class="langs" id="langs" role="group" data-t-attr="aria-label:hdr.langs">
+    <button type="button" data-lang="en" aria-pressed="true" title="English">🇬🇧</button>
+    <button type="button" data-lang="de" aria-pressed="false" title="Deutsch">🇩🇪</button>
+    <button type="button" data-lang="tr" aria-pressed="false" title="Türkçe">🇹🇷</button>
+  </div>
 </header>
 
 <main id="app">
 
   <section class="locked" id="locked" hidden>
     <span class="bullet" aria-hidden="true" style="width:56px;height:56px;font-size:1.6rem">♥</span>
-    <h1>Members only.</h1>
-    <p>Scan the QR code at the button table to get in.</p>
+    <h1 data-t="locked.h1">Members only.</h1>
+    <p data-t="locked.p">Scan the QR code at the button table to get in.</p>
   </section>
 
   <div id="content" hidden>
@@ -233,13 +246,13 @@
 </g>
 </svg>
       </div>
-      <p class="kicker">New York, someday soon</p>
-      <h1>Show your love<br>for the couple.</h1>
-      <p class="lede">Grab a button, wear it tonight, and chip in to give Niklas &amp; Yamur a wonderful time in New York City.</p>
-      <ol class="flow" aria-label="How it works">
-        <li><span>1</span> Chip in to the fund</li>
-        <li><span>2</span> Selfie for the Wall of Love</li>
-        <li><span>3</span> Vote on their New York</li>
+      <p class="kicker" data-t="hero.kicker">Some cash to blow in New York</p>
+      <h1 data-t-html="hero.h1">Show your love<br>for the couple.</h1>
+      <p class="lede" data-t="hero.lede">Grab a button, wear it tonight, and chip in to give Niklas &amp; Yağmur a wonderful time in New York City.</p>
+      <ol class="flow" data-t-attr="aria-label:hero.flowAria">
+        <li><span class="n">1</span> <span data-t="hero.step1">Chip in to the NY fund</span></li>
+        <li><span class="n">2</span> <span data-t="hero.step2">Take a selfie for the Wall of Love</span></li>
+        <li><span class="n">3</span> <span data-t="hero.step3">Vote on what to do in New York</span></li>
       </ol>
     </section>
 
@@ -247,49 +260,48 @@
 
       <li class="stop" id="stop1">
         <span class="bullet" aria-hidden="true"><span>1</span></span>
-        <h2>Chip in, if you like</h2>
-        <p class="hint" id="payHint">A button costs nothing. If you want to add to the trip, most people give around €8, £7 or $9. Any amount is lovely, none is expected.</p>
+        <h2 data-t="pay.h2">Please chip in</h2>
+        <p class="hint" id="payHint" data-t="pay.hint">A button costs nothing. But an €8 donation adds up fast to a wonderful trip.</p>
         <a class="btn pay mt" id="payBtn" href="#" target="_blank" rel="noopener">
-          <span class="pp" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg></span> Add to the New York fund <span class="sub">PayPal or card, no account needed</span>
+          <span class="pp" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg></span> <span data-t="pay.btn">Add to the New York fund</span> <span class="sub" data-t="pay.btnSub">PayPal or card, no account needed</span>
         </a>
         <div class="alt mt" id="alt">
-          <span>Prefer a bank transfer?</span>
-          <button class="btn ghost sm" id="giroBtn" type="button" aria-expanded="false" aria-controls="giroBox">IBAN / Girocode</button>
-          <span>Cash? There is a jar next to the buttons.</span>
+          <span data-t="pay.altQ">Prefer a bank transfer?</span>
+          <button class="btn ghost sm" id="giroBtn" type="button" aria-expanded="false" aria-controls="giroBox" data-t="pay.ibanBtn">IBAN / Girocode</button>
         </div>
         <div class="giro" id="giroBox" hidden>
-          <p><strong>Bank transfer to Jonas</strong>, he passes it straight on. 8 € is the going rate, any amount is welcome.</p>
+          <p data-t-html="giro.p"><strong>Bank transfer to Jonas</strong>, he passes it straight on. 8 € is the going rate, any amount is welcome.</p>
           <p class="mono" id="ibanText">DE58 4306 0967 1071 0794 00</p>
-          <button class="btn ghost sm" id="copyIban" type="button">Copy IBAN</button>
+          <button class="btn ghost sm" id="copyIban" type="button" data-t="giro.copy">Copy IBAN</button>
         </div>
-        <button class="btn red mt" id="doneBtn" type="button">Continue <span class="heart" aria-hidden="true">♥</span></button>
-        <p class="hint" style="margin-top:8px">Just here for the button? Continue anyway, the selfie and the vote are for everyone.</p>
+        <button class="btn red mt" id="doneBtn" type="button"><span data-t="pay.continue">Continue</span> <span class="heart" aria-hidden="true">♥</span></button>
+        <p class="hint" style="margin-top:8px" data-t="pay.skip">Just here for the button? Continue anyway, the selfie and the vote are for everyone.</p>
       </li>
 
       <li class="stop wait" id="stop2">
         <span class="bullet" aria-hidden="true"><span>2</span></span>
-        <h2>Selfie with your button</h2>
-        <p class="hint">Optional, goes on the Wall of Love.</p>
+        <h2 data-t="selfie.h2">Selfie with your button</h2>
+        <p class="hint" data-t="selfie.hint">Optional, goes on the Wall of Love.</p>
         <div class="selfie" id="selfieBox" hidden>
-          <label class="frame" id="frame" for="file">Tap to open the camera</label>
+          <label class="frame" id="frame" for="file" data-t="selfie.frame">Tap to open the camera</label>
           <input id="file" type="file" accept="image/*" capture="user" hidden>
           <div class="row">
-            <button class="btn ghost" id="retake" type="button" hidden>Retake</button>
+            <button class="btn ghost" id="retake" type="button" hidden data-t="selfie.retake">Retake</button>
           </div>
         </div>
       </li>
 
       <li class="stop wait" id="stop3">
         <span class="bullet" aria-hidden="true"><span>3</span></span>
-        <h2>What should the trip include?</h2>
-        <p class="hint">One vote. Niklas &amp; Yamur get the results as their travel brief.</p>
+        <h2 data-t="vote.h2">What should the trip include?</h2>
+        <p class="hint" data-t="vote.hint">One vote. Niklas &amp; Yağmur get the results as their travel brief.</p>
         <div id="voteBox" hidden>
-          <div class="chips" id="chips" role="group" aria-label="Vote"></div>
+          <div class="chips" id="chips" role="group" data-t-attr="aria-label:vote.h2"></div>
           <div class="field">
-            <label for="name">Your name <span class="opt">(optional)</span></label>
-            <input id="name" type="text" maxlength="60" autocomplete="name" placeholder="So they know who to thank">
+            <label for="name"><span data-t="vote.nameLabel">Your name</span> <span class="opt" data-t="vote.optional">(optional)</span></label>
+            <input id="name" type="text" maxlength="60" autocomplete="name" placeholder="So they know who to thank" data-t-attr="placeholder:vote.namePlaceholder">
           </div>
-          <button class="btn mt" id="sendBtn" type="button" disabled>Send my vote</button>
+          <button class="btn mt" id="sendBtn" type="button" disabled data-t="vote.send">Send my vote</button>
           <p class="err" id="err" hidden></p>
         </div>
       </li>
@@ -298,11 +310,11 @@
     <section class="thanks" id="thanks" hidden>
       <div class="card">
         <span class="bullet" aria-hidden="true">✓</span>
-        <h2>You're in the fan club.</h2>
+        <h2 data-t="thanks.h2">You're in the fan club.</h2>
         <p id="thanksText">Thank you. Wear the button, spread the love.</p>
       </div>
       <div class="stylist" id="stylist" hidden>
-        <h3 class="wallhead">Your fan club portrait</h3>
+        <h3 class="wallhead" data-t="stylist.h3">Your fan club portrait</h3>
         <div class="stylist-wait" id="stylistWait">
           <div class="stylist-bar" aria-hidden="true"><span></span></div>
           <p class="stylist-status" id="stylistStatus" aria-live="polite">Pinning a button on you…</p>
@@ -310,44 +322,44 @@
         <div class="picks" id="picks" hidden>
           <button class="pick" type="button" data-pick="orig" aria-pressed="false">
             <img id="pickOrigImg" alt="Your original selfie">
-            <span>Original</span>
+            <span data-t="pick.orig">Original</span>
           </button>
           <button class="pick" type="button" data-pick="edited" aria-pressed="true">
             <img id="pickEditedImg" alt="Your selfie with extra I love NY">
-            <span>Extra I ♥ NY</span>
+            <span data-t="pick.edited">Extra I ♥ NY</span>
           </button>
         </div>
-        <p class="stylist-hint" id="pickHint" hidden>Tap the other one to put it on the Wall of Love instead.</p>
+        <p class="stylist-hint" id="pickHint" hidden data-t="pick.hint">Tap the other one to put it on the Wall of Love instead.</p>
       </div>
       <div class="tally" id="tally" hidden>
-        <h3>Fan club vote so far</h3>
+        <h3 data-t="tally.h3">Fan club vote so far</h3>
         <div id="bars"></div>
       </div>
       <div id="wallBox" hidden>
-        <h3 class="wallhead">Wall of Love</h3>
-        <p class="wallhint" id="wallHint" hidden>Tap a photo to see it big. Styled portraits carry a red NY badge, you can flip to the original.</p>
+        <h3 class="wallhead" data-t="wall.h3">Wall of Love</h3>
+        <p class="wallhint" id="wallHint" hidden data-t="wall.hint">Tap a photo to see it big. Styled portraits carry a red NY badge, you can flip to the original.</p>
         <div class="wall" id="wall"></div>
       </div>
-      <button class="link" id="again" type="button">Someone else wants to join? Start over</button>
+      <button class="link" id="again" type="button" data-t="again">Someone else wants to join? Start over</button>
     </section>
 
   </div>
 </main>
 
 <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Wall of Love photo">
-  <button class="lb-close" id="lbClose" type="button" aria-label="Close">×</button>
+  <button class="lb-close" id="lbClose" type="button" data-t-attr="aria-label:lb.close">×</button>
   <figure class="lb-figure">
     <img id="lbImg" alt="">
     <figcaption class="lb-cap"><span id="lbName"></span><span id="lbVote" class="lb-vote"></span></figcaption>
   </figure>
   <div class="lb-tools" id="lbTools" hidden>
-    <button class="lb-toggle" id="lbToggle" type="button" aria-pressed="false">Show original</button>
+    <button class="lb-toggle" id="lbToggle" type="button" aria-pressed="false" data-t="lb.showOrig">Show original</button>
   </div>
 </div>
 
 <footer>
-  <p class="serif">Niklas &amp; Yamur · New York, someday soon</p>
-  <p>The I ♥ NY buttons are a gift from Jonas. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Wall of Love on this password-protected page.</p>
+  <p class="serif" data-t="foot.serif">Niklas &amp; Yağmur · New York, here they come</p>
+  <p data-t="foot.p">The I ♥ NY buttons are a gift to Niklas &amp; Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Wall of Love on this password-protected page.</p>
 </footer>
 
 <script>
@@ -363,20 +375,323 @@ const CFG = {
   backend: "https://script.google.com/macros/s/AKfycbwSbbUZSqiAoyzUXrqjtIgqUJAZ2JI24D_mJY1w7rQAxJUuqhUTdeybOg5icuRp-n-3/exec",
   // SHA-256 hex of the gate key that lives in the QR URL as ?k=... . "" = no gate (setup mode).
   // The backend keeps its own key (backendKey), so the QR key can change without touching Apps Script.
-  keyHash: "a2ceb6617356faf50fed1cc7377aaa074cb9e9edb0f76db9caba0326dabcdb10",
+  keyHash: "3c82d69b44c29026606f4a1be9692ca224946fd994acb48a9a11df8b3a844998",
   backendKey: "70f65d43437f",
   amounts: { EUR: 8, GBP: 7, USD: 9 },
 };
 
 const VOTES = [
-  // ids are fixed on the backend, labels are what the guests see
-  { id: "show",     ico: "🎟️", label: "Broadway or a concert" },
-  { id: "thrift",   ico: "🛍️", label: "A shopping spree" },
-  { id: "club",     ico: "🪩", label: "A proper club night" },
-  { id: "food",     ico: "🍕", label: "Eat their way through the city" },
-  { id: "rooftop",  ico: "🍸", label: "Rooftop drinks at sunset" },
-  { id: "stay",     ico: "🏙️", label: "A night somewhere fancy" },
+  // ids are fixed on the backend, the labels guests see live in I18N
+  { id: "show",    ico: "🎟️" },
+  { id: "thrift",  ico: "🛍️" },
+  { id: "club",    ico: "🪩" },
+  { id: "food",    ico: "🍕" },
+  { id: "rooftop", ico: "🍸" },
+  { id: "stay",    ico: "🏙️" },
 ]
+
+/** Vote labels follow the chosen language. */
+function voteLabel(id) { return t("vote.opt." + id); }
+
+/* ---------- Language ---------- */
+// Three languages, picked from the browser on first visit and remembered after
+// a manual switch. Every guest facing string lives here, nothing is hard coded
+// further down. Keys ending in Html may contain markup, the rest are plain text.
+const LANGS = ["en", "de", "tr"];
+const I18N = {
+  en: {
+    "hdr.eyebrow": "Fan club · est. 19 Sept 2026",
+    "hdr.langs": "Language",
+    "locked.h1": "Members only.",
+    "locked.p": "Scan the QR code at the button table to get in.",
+    "hero.kicker": "Some cash to blow in New York",
+    "hero.h1": "Show your love<br>for the couple.",
+    "hero.lede": "Grab a button, wear it tonight, and chip in to give Niklas & Yağmur a wonderful time in New York City.",
+    "hero.flowAria": "How it works",
+    "hero.step1": "Chip in to the NY fund",
+    "hero.step2": "Take a selfie for the Wall of Love",
+    "hero.step3": "Vote on what to do in New York",
+    "pay.h2": "Please chip in",
+    "pay.hint": "A button costs nothing. But an €8 donation adds up fast to a wonderful trip.",
+    "pay.btn": "Add to the New York fund",
+    "pay.btnSub": "PayPal or card, no account needed",
+    "pay.altQ": "Prefer a bank transfer?",
+    "pay.ibanBtn": "IBAN / Girocode",
+    "giro.p": "<strong>Bank transfer</strong>, it is passed straight on. 8 € is the going rate, any amount is welcome.",
+    "giro.copy": "Copy IBAN",
+    "giro.copied": "Copied",
+    "pay.continue": "Continue",
+    "pay.skip": "Just here for the button? Continue anyway, the selfie and the vote are for everyone.",
+    "selfie.h2": "Selfie with your button",
+    "selfie.hint": "Optional, goes on the Wall of Love.",
+    "selfie.frame": "Tap to open the camera",
+    "selfie.retake": "Retake",
+    "vote.h2": "What should the trip include?",
+    "vote.hint": "One vote. Niklas & Yağmur get the results as their travel brief.",
+    "vote.nameLabel": "Your name",
+    "vote.optional": "(optional)",
+    "vote.namePlaceholder": "So they know who to thank",
+    "vote.send": "Send my vote",
+    "vote.sending": "Sending…",
+    "vote.errPhoto": "That photo did not load. Try another one.",
+    "vote.errSend": "Could not send. Check your connection and try again.",
+    "vote.opt.show": "Broadway or a concert",
+    "vote.opt.thrift": "A shopping spree",
+    "vote.opt.club": "A proper club night",
+    "vote.opt.food": "Eat their way through the city",
+    "vote.opt.rooftop": "Rooftop drinks at sunset",
+    "vote.opt.stay": "A night somewhere fancy",
+    "thanks.h2": "You're in the fan club.",
+    "thanks.withName": "{name}, thank you.",
+    "thanks.plain": "Thank you.",
+    "thanks.voted": "Voted: {vote}.",
+    "thanks.tail": "Wear the button, spread the love.",
+    "stylist.h3": "Your fan club portrait",
+    "stylist.l1": "Pinning a button on you…",
+    "stylist.l2": "Making sure the heart is properly red…",
+    "stylist.l3": "Raiding the photo booth prop box…",
+    "stylist.l4": "Trying a cap. Or sunglasses. Or a tote bag…",
+    "stylist.l5": "Almost there, the stylist is fussy…",
+    "stylist.busy": "The stylist is busy right now. Your original selfie is on the wall.",
+    "pick.orig": "Original",
+    "pick.edited": "Extra I ♥ NY",
+    "pick.hint": "Tap the other one to put it on the Wall of Love instead.",
+    "tally.h3": "Fan club vote so far",
+    "wall.h3": "Wall of Love",
+    "wall.hint": "Tap a photo to see it big. Styled portraits carry a red NY badge, you can flip to the original.",
+    "again": "Someone else wants to join? Start over",
+    "lb.showOrig": "Show original",
+    "lb.showEdited": "Show extra I ♥ NY",
+    "lb.close": "Close",
+    "lb.voted": "voted {vote}",
+    "lb.alt": "Fan selfie",
+    "lb.altNamed": "Selfie from {name}",
+    "foot.serif": "Niklas & Yağmur · New York, here they come",
+    "foot.p": "The I ♥ NY buttons are a gift to Niklas & Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Wall of Love on this password-protected page."
+  },
+  de: {
+    "hdr.eyebrow": "Fanclub · seit 19. Sept. 2026",
+    "hdr.langs": "Sprache",
+    "locked.h1": "Nur für Mitglieder.",
+    "locked.p": "Scanne den QR-Code am Button-Tisch, um reinzukommen.",
+    "hero.kicker": "Etwas Taschengeld für New York",
+    "hero.h1": "Zeig dem Paar<br>deine Liebe.",
+    "hero.lede": "Schnapp dir einen Button, trag ihn heute Abend und gib etwas dazu, damit Niklas & Yağmur eine wundervolle Zeit in New York City haben.",
+    "hero.flowAria": "So läuft es",
+    "hero.step1": "Etwas in die NY-Kasse geben",
+    "hero.step2": "Selfie für die Wall of Love machen",
+    "hero.step3": "Abstimmen, was die beiden in New York machen",
+    "pay.h2": "Bitte gib etwas dazu",
+    "pay.hint": "Ein Button kostet nichts. Aber aus vielen 8 € wird schnell eine wundervolle Reise.",
+    "pay.btn": "In die New-York-Kasse einzahlen",
+    "pay.btnSub": "PayPal oder Karte, kein Konto nötig",
+    "pay.altQ": "Lieber überweisen?",
+    "pay.ibanBtn": "IBAN / Girocode",
+    "giro.p": "<strong>Überweisung</strong>, geht eins zu eins ans Paar weiter. 8 € sind üblich, jeder Betrag ist willkommen.",
+    "giro.copy": "IBAN kopieren",
+    "giro.copied": "Kopiert",
+    "pay.continue": "Weiter",
+    "pay.skip": "Nur wegen des Buttons hier? Mach trotzdem weiter, Selfie und Abstimmung sind für alle.",
+    "selfie.h2": "Selfie mit deinem Button",
+    "selfie.hint": "Freiwillig, kommt auf die Wall of Love.",
+    "selfie.frame": "Tippen und Kamera öffnen",
+    "selfie.retake": "Nochmal aufnehmen",
+    "vote.h2": "Was darf auf der Reise nicht fehlen?",
+    "vote.hint": "Eine Stimme. Niklas & Yağmur bekommen das Ergebnis als Reise-Briefing.",
+    "vote.nameLabel": "Dein Name",
+    "vote.optional": "(freiwillig)",
+    "vote.namePlaceholder": "Damit sie wissen, wem sie danken",
+    "vote.send": "Stimme abschicken",
+    "vote.sending": "Wird gesendet…",
+    "vote.errPhoto": "Das Foto ließ sich nicht laden. Versuch ein anderes.",
+    "vote.errSend": "Senden hat nicht geklappt. Prüf deine Verbindung und versuch es nochmal.",
+    "vote.opt.show": "Broadway oder ein Konzert",
+    "vote.opt.thrift": "Shoppen bis zum Abwinken",
+    "vote.opt.club": "Eine richtige Clubnacht",
+    "vote.opt.food": "Quer durch die Stadt essen",
+    "vote.opt.rooftop": "Sundowner auf dem Rooftop",
+    "vote.opt.stay": "Eine Nacht im schicken Hotel",
+    "thanks.h2": "Du bist im Fanclub.",
+    "thanks.withName": "{name}, danke dir.",
+    "thanks.plain": "Danke dir.",
+    "thanks.voted": "Deine Stimme: {vote}.",
+    "thanks.tail": "Trag den Button, verbreite die Liebe.",
+    "stylist.h3": "Dein Fanclub-Porträt",
+    "stylist.l1": "Wir stecken dir einen Button an…",
+    "stylist.l2": "Wir machen das Herz ordentlich rot…",
+    "stylist.l3": "Wir wühlen in der Requisitenkiste…",
+    "stylist.l4": "Cap? Sonnenbrille? Oder doch die Tasche…",
+    "stylist.l5": "Gleich fertig, der Stylist ist pingelig…",
+    "stylist.busy": "Der Stylist ist gerade beschäftigt. Dein Original-Selfie hängt an der Wand.",
+    "pick.orig": "Original",
+    "pick.edited": "Extra I ♥ NY",
+    "pick.hint": "Tipp das andere an, wenn es stattdessen auf die Wall of Love soll.",
+    "tally.h3": "Zwischenstand der Fanclub-Abstimmung",
+    "wall.h3": "Wall of Love",
+    "wall.hint": "Tipp ein Foto an, um es groß zu sehen. Gestylte Porträts tragen ein rotes NY-Abzeichen, du kannst zum Original wechseln.",
+    "again": "Will noch jemand mitmachen? Von vorne starten",
+    "lb.showOrig": "Original zeigen",
+    "lb.showEdited": "Extra I ♥ NY zeigen",
+    "lb.close": "Schließen",
+    "lb.voted": "hat für {vote} gestimmt",
+    "lb.alt": "Fan-Selfie",
+    "lb.altNamed": "Selfie von {name}",
+    "foot.serif": "Niklas & Yağmur · Auf nach New York",
+    "foot.p": "Die I ♥ NY Buttons sind ein Geschenk an Niklas & Yağmur. Der I ♥ NY Fanclub schenkt jede Spende für die Buttons dem Paar, für eine wundervolle Zeit in New York City. Selfies sehen nur das Paar und die Wall of Love auf dieser passwortgeschützten Seite."
+  },
+  tr: {
+    "hdr.eyebrow": "Fan kulübü · 19 Eylül 2026",
+    "hdr.langs": "Dil",
+    "locked.h1": "Sadece üyelere özel.",
+    "locked.p": "Girmek için rozet masasındaki QR kodu okut.",
+    "hero.kicker": "New York için biraz harçlık",
+    "hero.h1": "Çifte olan<br>sevgini göster.",
+    "hero.lede": "Bir rozet al, bu gece tak ve sen de katkıda bulun ki Niklas & Yağmur New York'ta harika vakit geçirsinler.",
+    "hero.flowAria": "Nasıl işliyor",
+    "hero.step1": "NY kasasına katkıda bulun",
+    "hero.step2": "Wall of Love için selfie çek",
+    "hero.step3": "New York'ta ne yapacaklarına oy ver",
+    "pay.h2": "Sen de katkıda bulun",
+    "pay.hint": "Rozet bedava. Ama 8 €'luk bağışlar hızla birikir ve harika bir seyahate dönüşür.",
+    "pay.btn": "New York kasasına katkı yap",
+    "pay.btnSub": "PayPal veya kart, hesap gerekmez",
+    "pay.altQ": "Havale mi tercih edersin?",
+    "pay.ibanBtn": "IBAN / Girocode",
+    "giro.p": "<strong>Banka havalesi</strong>, para doğrudan çifte iletilir. Genelde 8 € veriliyor, ama her miktar makbul.",
+    "giro.copy": "IBAN'ı kopyala",
+    "giro.copied": "Kopyalandı",
+    "pay.continue": "Devam",
+    "pay.skip": "Sadece rozet için mi geldin? Yine de devam et, selfie ve oylama herkese açık.",
+    "selfie.h2": "Rozetinle bir selfie",
+    "selfie.hint": "İsteğe bağlı, Wall of Love'da yerini alır.",
+    "selfie.frame": "Kamerayı açmak için dokun",
+    "selfie.retake": "Yeniden çek",
+    "vote.h2": "Seyahatte neler olsun?",
+    "vote.hint": "Tek oy. Sonuçlar Niklas & Yağmur'a seyahat rehberi olarak gidecek.",
+    "vote.nameLabel": "Adın",
+    "vote.optional": "(isteğe bağlı)",
+    "vote.namePlaceholder": "Teşekkür edebilsinler diye",
+    "vote.send": "Oyumu gönder",
+    "vote.sending": "Gönderiliyor…",
+    "vote.errPhoto": "Bu fotoğraf yüklenemedi. Başka birini dene.",
+    "vote.errSend": "Gönderilemedi. Bağlantını kontrol edip tekrar dene.",
+    "vote.opt.show": "Broadway ya da bir konser",
+    "vote.opt.thrift": "Bir alışveriş çılgınlığı",
+    "vote.opt.club": "Doğru düzgün bir kulüp gecesi",
+    "vote.opt.food": "Şehri yiye yiye gezmek",
+    "vote.opt.rooftop": "Gün batımında bir çatı barda içkiler",
+    "vote.opt.stay": "Şık bir otelde bir gece",
+    "thanks.h2": "Artık fan kulübündesin.",
+    "thanks.withName": "{name}, çok teşekkürler.",
+    "thanks.plain": "Çok teşekkürler.",
+    "thanks.voted": "Oyun: {vote}.",
+    "thanks.tail": "Rozeti tak, sevgiyi yay.",
+    "stylist.h3": "Fan kulübü portren",
+    "stylist.l1": "Sana bir rozet takıyoruz…",
+    "stylist.l2": "Kalbin iyice kırmızı olduğundan emin oluyoruz…",
+    "stylist.l3": "Aksesuar kutusunu karıştırıyoruz…",
+    "stylist.l4": "Şapka mı, güneş gözlüğü mü, yoksa bez çanta mı…",
+    "stylist.l5": "Az kaldı, stilist biraz titiz…",
+    "stylist.busy": "Stilist şu an meşgul. Orijinal selfie'n duvarda.",
+    "pick.orig": "Orijinal",
+    "pick.edited": "Ekstra I ♥ NY",
+    "pick.hint": "Wall of Love'a onun yerine diğeri gitsin istiyorsan diğerine dokun.",
+    "tally.h3": "Fan kulübü oylamasında son durum",
+    "wall.h3": "Wall of Love",
+    "wall.hint": "Büyütmek için bir fotoğrafa dokun. Stilize portrelerde kırmızı NY rozeti var, orijinaline geçebilirsin.",
+    "again": "Başka katılmak isteyen var mı? Baştan başla",
+    "lb.showOrig": "Orijinali göster",
+    "lb.showEdited": "Ekstra I ♥ NY halini göster",
+    "lb.close": "Kapat",
+    "lb.voted": "oyu: {vote}",
+    "lb.alt": "Fan selfie'si",
+    "lb.altNamed": "{name} selfie'si",
+    "foot.serif": "Niklas & Yağmur · New York yolcusu",
+    "foot.p": "I ♥ NY rozetleri Niklas & Yağmur'a bir hediye. I ♥ NY Fan Kulübü, rozetler için toplanan her bağışı çifte armağan ediyor, New York City'de harika vakit geçirsinler diye. Selfie'ler yalnızca çiftle ve bu şifre korumalı sayfadaki Wall of Love'da paylaşılır."
+  }
+};
+
+let LANG = "en";
+let lastThanks = null;
+
+/** Looks up a string, falls back to English, then to the key itself. */
+function t(key, vars) {
+  const dict = I18N[LANG] || I18N.en;
+  let out = dict[key];
+  if (out === undefined) out = I18N.en[key];
+  if (out === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function (k) { out = out.split("{" + k + "}").join(vars[k]); });
+  return out;
+}
+
+/** Browser preference on first visit, the remembered choice after that. */
+function detectLang() {
+  try {
+    const saved = localStorage.getItem("fanclub_lang");
+    if (saved && LANGS.indexOf(saved) !== -1) return saved;
+  } catch (e) {}
+  const prefs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+  for (let i = 0; i < prefs.length; i++) {
+    const code = String(prefs[i] || "").slice(0, 2).toLowerCase();
+    if (LANGS.indexOf(code) !== -1) return code;
+  }
+  return "en";
+}
+
+function thanksLine(p) {
+  const name = p && p.name ? String(p.name).trim() : "";
+  const v = VOTES.find(function (x) { return x.id === (p && p.vote); });
+  const head = name ? t("thanks.withName", { name: name }) : t("thanks.plain");
+  const voted = v ? " " + t("thanks.voted", { vote: voteLabel(v.id) }) : "";
+  return head + voted + " " + t("thanks.tail");
+}
+
+/** Rewrites everything the dictionary owns, including already rendered parts. */
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-t]").forEach(function (el) {
+    el.textContent = t(el.getAttribute("data-t"));
+  });
+  document.querySelectorAll("[data-t-html]").forEach(function (el) {
+    el.innerHTML = t(el.getAttribute("data-t-html"));
+  });
+  document.querySelectorAll("[data-t-attr]").forEach(function (el) {
+    el.getAttribute("data-t-attr").split(",").forEach(function (pair) {
+      const bits = pair.split(":");
+      if (bits.length === 2) el.setAttribute(bits[0].trim(), t(bits[1].trim()));
+    });
+  });
+  document.querySelectorAll("#langs button").forEach(function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.lang === LANG));
+  });
+
+  // Parts that JavaScript rendered earlier, which data-t cannot reach.
+  const sel = vote;
+  setupChips();
+  if (sel) {
+    const chip = document.querySelector('#chips .chip[data-id="' + sel + '"]');
+    if (chip) chip.setAttribute("aria-pressed", "true");
+    $("sendBtn").disabled = false;
+  }
+  if (lastThanks) $("thanksText").textContent = thanksLine(lastThanks);
+  if (lbState && !$("lbTools").hidden) syncLbToggle();
+  if (!$("tally").hidden) loadStats();
+}
+
+function setLang(code) {
+  if (LANGS.indexOf(code) === -1) return;
+  LANG = code;
+  try { localStorage.setItem("fanclub_lang", code); } catch (e) {}
+  applyLang();
+}
+
+function initLang() {
+  LANG = detectLang();
+  document.querySelectorAll("#langs button").forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+  applyLang();
+}
 
 /* ---------- State ---------- */
 const $ = (id) => document.getElementById(id);
@@ -415,10 +730,11 @@ function setupPayments() {
 
 function setupChips() {
   const box = $("chips");
+  box.innerHTML = "";
   VOTES.forEach(v => {
     const b = document.createElement("button");
     b.type = "button"; b.className = "chip"; b.dataset.id = v.id; b.setAttribute("aria-pressed", "false");
-    b.innerHTML = `<span class="ico" aria-hidden="true">${v.ico}</span><span>${v.label}</span>`;
+    b.innerHTML = `<span class="ico" aria-hidden="true">${v.ico}</span><span>${voteLabel(v.id)}</span>`;
     b.addEventListener("click", () => {
       vote = v.id;
       box.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
@@ -480,14 +796,14 @@ $("file").addEventListener("change", async (e) => {
     $("retake").hidden = false;
     $("stop2").classList.add("done");
   } catch (err) {
-    $("err").textContent = "That photo did not load. Try another one."; $("err").hidden = false;
+    $("err").textContent = t("vote.errPhoto"); $("err").hidden = false;
   }
 });
 $("retake").addEventListener("click", () => { $("file").value = ""; $("file").click(); });
 
 /* ---------- Submit ---------- */
 async function submit() {
-  const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Sending…"; $("err").hidden = true;
+  const btn = $("sendBtn"); btn.disabled = true; btn.textContent = t("vote.sending"); $("err").hidden = true;
   const payload = { k: CFG.backendKey, name: ($("name").value || "").trim().slice(0, 60), vote, selfie: selfieDataUrl, ua: navigator.userAgent.slice(0, 120) };
   let ok = false;
   if (CFG.backend) {
@@ -497,8 +813,8 @@ async function submit() {
       if (!ok) throw new Error(j.error || "server");
       entryId = j.id || null;
     } catch (e) {
-      btn.disabled = false; btn.textContent = "Send my vote";
-      $("err").textContent = "Could not send. Check your connection and try again."; $("err").hidden = false;
+      btn.disabled = false; btn.textContent = t("vote.send");
+      $("err").textContent = t("vote.errSend"); $("err").hidden = false;
       return;
     }
   } else {
@@ -513,8 +829,8 @@ function showThanks(p) {
   $("stop3").classList.add("done");
   $("line").hidden = true;
   document.querySelector(".hero").hidden = true;
-  const v = VOTES.find(x => x.id === (p && p.vote));
-  $("thanksText").textContent = (p && p.name ? p.name + ", t" : "T") + "hank you." + (v ? " Voted: " + v.label + "." : "") + " Wear the button, spread the love.";
+  lastThanks = p || null;
+  $("thanksText").textContent = thanksLine(p);
   $("thanks").hidden = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (p && p.id && p.selfie && CFG.backend) { entryId = p.id; runStylist(p.id); }
@@ -546,19 +862,13 @@ function showPicks(id, orig, edited) {
   });
 }
 
-const STYLIST_LINES = [
-  "Pinning a button on you…",
-  "Making sure the heart is properly red…",
-  "Raiding the photo booth prop box…",
-  "Trying a cap. Or sunglasses. Or a tote bag…",
-  "Almost there, the stylist is fussy…"
-];
+const STYLIST_LINE_KEYS = ["stylist.l1", "stylist.l2", "stylist.l3", "stylist.l4", "stylist.l5"];
 let stylistTimer = null;
 function startStylistLines() {
   let i = 0; const el = $("stylistStatus");
-  el.textContent = STYLIST_LINES[0];
+  el.textContent = t(STYLIST_LINE_KEYS[0]);
   stopStylistLines();
-  stylistTimer = setInterval(() => { i = (i + 1) % STYLIST_LINES.length; el.textContent = STYLIST_LINES[i]; }, 2800);
+  stylistTimer = setInterval(() => { i = (i + 1) % STYLIST_LINE_KEYS.length; el.textContent = t(STYLIST_LINE_KEYS[i]); }, 2800);
 }
 function stopStylistLines() { if (stylistTimer) { clearInterval(stylistTimer); stylistTimer = null; } }
 
@@ -575,14 +885,13 @@ async function runStylist(id) {
     stopStylistLines();
     document.querySelector(".stylist-bar").hidden = true;
     const st = $("stylistStatus");
-    st.textContent = "The stylist is busy right now. Your original selfie is on the wall.";
+    st.textContent = t("stylist.busy");
     st.classList.add("is-failed");
   }
 }
 
 
 /* ---------- Lightbox for the fan wall ---------- */
-const VOTE_LABEL = Object.fromEntries(VOTES.map(v => [v.id, v.label]));
 let lbState = null;
 function big(url) { return url ? url.replace(/sz=w\d+/, "sz=w1200") : url; }
 // Show the already cached wall thumbnail at once, then swap to the large
@@ -599,9 +908,9 @@ function showLbImage(url) {
 function openLightbox(s) {
   lbState = { orig: s.orig, edited: s.edited, showingEdited: !!(s.edited && s.url === s.edited) };
   showLbImage(lbState.showingEdited ? s.edited : s.orig);
-  $("lbImg").alt = s.name ? `Selfie from ${s.name}` : "Fan selfie";
+  $("lbImg").alt = s.name ? t("lb.altNamed", { name: s.name }) : t("lb.alt");
   $("lbName").textContent = s.name || "";
-  $("lbVote").textContent = s.vote && VOTE_LABEL[s.vote] ? "voted " + VOTE_LABEL[s.vote] : "";
+  $("lbVote").textContent = s.vote ? t("lb.voted", { vote: voteLabel(s.vote) }) : "";
   const both = !!(s.orig && s.edited);
   $("lbTools").hidden = !both;
   if (both) syncLbToggle();
@@ -611,7 +920,7 @@ function openLightbox(s) {
 }
 function syncLbToggle() {
   const b = $("lbToggle");
-  b.textContent = lbState.showingEdited ? "Show original" : "Show extra I ♥ NY";
+  b.textContent = lbState.showingEdited ? t("lb.showOrig") : t("lb.showEdited");
   b.setAttribute("aria-pressed", String(!lbState.showingEdited));
 }
 function closeLightbox() { $("lightbox").hidden = true; document.body.classList.remove("lb-open"); lbState = null; }
@@ -634,7 +943,7 @@ async function loadStats() {
     const bars = $("bars"); bars.innerHTML = "";
     VOTES.map(v => ({ ...v, n: (j.votes && j.votes[v.id]) || 0 })).sort((a, b) => b.n - a.n).forEach(v => {
       const d = document.createElement("div"); d.className = "bar";
-      d.innerHTML = `<span>${v.ico} ${v.label}</span><span class="n">${v.n}</span><div class="track"><div class="fill" style="width:${Math.round(v.n / total * 100)}%"></div></div>`;
+      d.innerHTML = `<span>${v.ico} ${voteLabel(v.id)}</span><span class="n">${v.n}</span><div class="track"><div class="fill" style="width:${Math.round(v.n / total * 100)}%"></div></div>`;
       bars.appendChild(d);
     });
     $("tally").hidden = false;
@@ -643,7 +952,7 @@ async function loadStats() {
       j.selfies.slice(0, 30).forEach(s => {
         const f = document.createElement("figure");
         const img = document.createElement("img"); img.loading = "lazy";
-        img.alt = s.name ? `Selfie from ${s.name}` : "Fan selfie";
+        img.alt = s.name ? t("lb.altNamed", { name: s.name }) : t("lb.alt");
         img.src = s.url;
         f.appendChild(img);
         const cap = document.createElement("figcaption");
@@ -662,13 +971,14 @@ async function loadStats() {
 
 $("giroBtn").addEventListener("click", () => { const b = $("giroBox"); b.hidden = !b.hidden; $("giroBtn").setAttribute("aria-expanded", String(!b.hidden)); });
 $("copyIban").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText("DE58430609671071079400"); $("copyIban").textContent = "Copied"; setTimeout(() => $("copyIban").textContent = "Copy IBAN", 1800); } catch (e) {}
+  try { await navigator.clipboard.writeText("DE58430609671071079400"); $("copyIban").textContent = t("giro.copied"); setTimeout(() => $("copyIban").textContent = t("giro.copy"), 1800); } catch (e) {}
 });
 $("doneBtn").addEventListener("click", openSteps);
 $("again").addEventListener("click", () => { try { localStorage.removeItem("fanclub_done"); } catch (e) {} location.reload(); });
 
 /* ---------- Boot ---------- */
 (async function boot() {
+  initLang();
   setupPayments(); setupChips();
   const ok = await gate();
   if (!ok) { $("locked").hidden = false; return; }
