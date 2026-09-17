@@ -205,6 +205,11 @@
   .giro strong { color: var(--priory-900); }
   .giro .mono { font-variant-numeric: tabular-nums; letter-spacing: .02em; color: var(--priory-900); font-weight: 600; }
   .giro .btn { padding: .55rem 1rem; font-size: .85rem; width: auto; justify-self: start; }
+  .altbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gbp-rows { display: grid; gap: 4px; margin: 0; }
+  .gbp-rows span { display: flex; justify-content: space-between; gap: 12px; }
+  .gbp-rows em { font-style: normal; }
+  .gbp-rows b { color: var(--priory-900); }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -267,12 +272,25 @@
         </a>
         <div class="alt mt" id="alt">
           <span data-t="pay.altQ">Prefer a bank transfer?</span>
-          <button class="btn ghost sm" id="giroBtn" type="button" aria-expanded="false" aria-controls="giroBox" data-t="pay.ibanBtn">IBAN / Girocode</button>
+          <div class="altbtns">
+            <button class="btn ghost sm" id="giroBtn" type="button" aria-expanded="false" aria-controls="giroBox" data-t="pay.ibanBtn">IBAN / Girocode</button>
+            <button class="btn ghost sm" id="gbpBtn" type="button" aria-expanded="false" aria-controls="gbpBox" hidden data-t="pay.gbpBtn">Pay in pounds</button>
+          </div>
         </div>
         <div class="giro" id="giroBox" hidden>
           <p data-t-html="giro.p"><strong>Bank transfer to Jonas</strong>, he passes it straight on. 8 € is the going rate, any amount is welcome.</p>
           <p class="mono" id="ibanText">DE58 4306 0967 1071 0794 00</p>
           <button class="btn ghost sm" id="copyIban" type="button" data-t="giro.copy">Copy IBAN</button>
+        </div>
+        <div class="giro" id="gbpBox" hidden>
+          <p data-t-html="gbp.p"><strong>UK guests, this one is free.</strong> A normal bank transfer in pounds, no fee on either side. About £7.</p>
+          <a class="btn ghost sm" id="wiseBtn" href="#" target="_blank" rel="noopener" hidden data-t="gbp.wiseBtn">Open the payment link</a>
+          <p class="gbp-rows">
+            <span><em data-t="gbp.holder">Account name</em> <b id="gbpHolder"></b></span>
+            <span><em data-t="gbp.sort">Sort code</em> <b class="mono" id="gbpSort"></b></span>
+            <span><em data-t="gbp.acct">Account number</em> <b class="mono" id="gbpAcct"></b></span>
+          </p>
+          <button class="btn ghost sm" id="copyGbp" type="button" data-t="gbp.copy">Copy the details</button>
         </div>
         <button class="btn red mt" id="doneBtn" type="button"><span data-t="pay.continue">Continue</span> <span class="heart" aria-hidden="true">♥</span></button>
         <p class="hint" style="margin-top:8px" data-t="pay.skip">Just here for the button? Continue anyway, the selfie and the vote are for everyone.</p>
@@ -370,7 +388,11 @@ const CFG = {
   // Optional PayPal Pool URL for card payments without a PayPal account.
   poolUrl: "https://www.paypal.com/pool/9sDhwfxFQu",
   // Optional Wise payment request link(s): one URL, or one per currency { EUR: "", GBP: "", USD: "" }.
-  wiseUrl: "",
+  wiseUrl: "https://wise.com/pay/me/jonasconstantinfrankmichelw",
+  // UK guests. Filled in, these unlock a second bank transfer box that costs a
+  // UK payer nothing (Faster Payments) instead of the PayPal cross border fee.
+  // Leave any of them empty and the whole GBP block stays hidden.
+  gbp: { holder: "", sortCode: "", accountNumber: "" },
   // Google Apps Script web app URL (ends with /exec). "" = votes stay on this phone only.
   backend: "https://script.google.com/macros/s/AKfycbwSbbUZSqiAoyzUXrqjtIgqUJAZ2JI24D_mJY1w7rQAxJUuqhUTdeybOg5icuRp-n-3/exec",
   // SHA-256 hex of the gate key that lives in the QR URL as ?k=... . "" = no gate (setup mode).
@@ -417,6 +439,14 @@ const I18N = {
     "pay.btnSub": "PayPal or card, no account needed",
     "pay.altQ": "Prefer a bank transfer?",
     "pay.ibanBtn": "IBAN / Girocode",
+    "pay.gbpBtn": "Pay in pounds",
+    "gbp.p": "<strong>UK guests, this one is free.</strong> A normal bank transfer in pounds, no fee on either side. About £7.",
+    "gbp.wiseBtn": "Open the payment link",
+    "gbp.holder": "Account name",
+    "gbp.sort": "Sort code",
+    "gbp.acct": "Account number",
+    "gbp.copy": "Copy the details",
+    "gbp.copied": "Copied",
     "giro.p": "<strong>Bank transfer</strong>, it is passed straight on. 8 € is the going rate, any amount is welcome.",
     "giro.copy": "Copy IBAN",
     "giro.copied": "Copied",
@@ -487,6 +517,14 @@ const I18N = {
     "pay.btnSub": "PayPal oder Karte, kein Konto nötig",
     "pay.altQ": "Lieber überweisen?",
     "pay.ibanBtn": "IBAN / Girocode",
+    "pay.gbpBtn": "In Pfund zahlen",
+    "gbp.p": "<strong>Für Gäste aus UK ist das der kostenlose Weg.</strong> Eine normale Überweisung in Pfund, keine Gebühr auf beiden Seiten. Etwa 7 £.",
+    "gbp.wiseBtn": "Zahlungslink öffnen",
+    "gbp.holder": "Kontoinhaber",
+    "gbp.sort": "Sort Code",
+    "gbp.acct": "Kontonummer",
+    "gbp.copy": "Daten kopieren",
+    "gbp.copied": "Kopiert",
     "giro.p": "<strong>Überweisung</strong>, geht eins zu eins ans Paar weiter. 8 € sind üblich, jeder Betrag ist willkommen.",
     "giro.copy": "IBAN kopieren",
     "giro.copied": "Kopiert",
@@ -557,6 +595,14 @@ const I18N = {
     "pay.btnSub": "PayPal veya kart, hesap gerekmez",
     "pay.altQ": "Havale mi tercih edersin?",
     "pay.ibanBtn": "IBAN / Girocode",
+    "pay.gbpBtn": "Sterlin ile öde",
+    "gbp.p": "<strong>İngiltere'deki misafirler için ücretsiz yol.</strong> Sterlin ile normal bir banka transferi, iki tarafta da masraf yok. Yaklaşık 7 £.",
+    "gbp.wiseBtn": "Ödeme bağlantısını aç",
+    "gbp.holder": "Hesap sahibi",
+    "gbp.sort": "Sort code",
+    "gbp.acct": "Hesap numarası",
+    "gbp.copy": "Bilgileri kopyala",
+    "gbp.copied": "Kopyalandı",
     "giro.p": "<strong>Banka havalesi</strong>, para doğrudan çifte iletilir. Genelde 8 € veriliyor, ama her miktar makbul.",
     "giro.copy": "IBAN'ı kopyala",
     "giro.copied": "Kopyalandı",
@@ -970,6 +1016,32 @@ async function loadStats() {
 
 
 $("giroBtn").addEventListener("click", () => { const b = $("giroBox"); b.hidden = !b.hidden; $("giroBtn").setAttribute("aria-expanded", String(!b.hidden)); });
+$("gbpBtn").addEventListener("click", () => { const b = $("gbpBox"); b.hidden = !b.hidden; $("gbpBtn").setAttribute("aria-expanded", String(!b.hidden)); });
+$("copyGbp").addEventListener("click", async () => {
+  const text = [CFG.gbp.holder, "Sort code " + CFG.gbp.sortCode, "Account number " + CFG.gbp.accountNumber].join("\n");
+  try { await navigator.clipboard.writeText(text); $("copyGbp").textContent = t("gbp.copied"); setTimeout(() => $("copyGbp").textContent = t("gbp.copy"), 1800); } catch (e) {}
+});
+
+/**
+ * The pounds box appears as soon as there is either a payment link or a full
+ * set of GBP account details. The typed details are optional: with only the
+ * link, the payer reads the account details off the Wise page instead.
+ */
+function setupGbp() {
+  const g = CFG.gbp || {};
+  const hasDetails = !!(g.holder && g.sortCode && g.accountNumber);
+  if (!CFG.wiseUrl && !hasDetails) return;
+  if (CFG.wiseUrl) { const w = $("wiseBtn"); w.href = CFG.wiseUrl; w.hidden = false; }
+  if (hasDetails) {
+    $("gbpHolder").textContent = g.holder;
+    $("gbpSort").textContent = g.sortCode;
+    $("gbpAcct").textContent = g.accountNumber;
+  } else {
+    $("gbpBox").querySelector(".gbp-rows").hidden = true;
+    $("copyGbp").hidden = true;
+  }
+  $("gbpBtn").hidden = false;
+}
 $("copyIban").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText("DE58430609671071079400"); $("copyIban").textContent = t("giro.copied"); setTimeout(() => $("copyIban").textContent = t("giro.copy"), 1800); } catch (e) {}
 });
@@ -979,7 +1051,7 @@ $("again").addEventListener("click", () => { try { localStorage.removeItem("fanc
 /* ---------- Boot ---------- */
 (async function boot() {
   initLang();
-  setupPayments(); setupChips();
+  setupPayments(); setupGbp(); setupChips();
   const ok = await gate();
   if (!ok) { $("locked").hidden = false; return; }
   $("content").hidden = false;
