@@ -122,6 +122,7 @@
   .frame:hover { border-color: var(--sage-500); background: #fff; }
   .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .frame.has { border-style: solid; border-color: var(--hairline); padding: 0; }
+  .selfie .working { font-size: .85rem; color: var(--sage-700); text-align: center; text-wrap: balance; }
 
   /* Vote chips, like the site's .choice */
   /* minmax(0, 1fr) keeps one long word in a label from widening its column at the other column's expense */
@@ -294,6 +295,7 @@
           <div class="row">
             <button class="btn ghost" id="retake" type="button" hidden data-t="selfie.retake">Retake</button>
           </div>
+          <p class="working" id="selfieWorking" hidden data-t="selfie.working">Nice. Your fan club portrait is already in the works.</p>
         </div>
       </li>
 
@@ -433,6 +435,7 @@ const I18N = {
     "selfie.hint": "Optional, goes on the Wall of Love.",
     "selfie.frame": "Tap to open the camera",
     "selfie.retake": "Retake",
+    "selfie.working": "Nice. Your fan club portrait is already in the works.",
     "vote.h2": "What should the trip include?",
     "vote.hint": "One vote. Niklas & Yağmur get the results as their travel brief.",
     "vote.nameLabel": "Your name",
@@ -504,6 +507,7 @@ const I18N = {
     "selfie.hint": "Freiwillig, kommt auf die Wall of Love.",
     "selfie.frame": "Tippen und Kamera öffnen",
     "selfie.retake": "Nochmal aufnehmen",
+    "selfie.working": "Schön. Dein Fanclub-Porträt ist schon in Arbeit.",
     "vote.h2": "Was darf auf der Reise nicht fehlen?",
     "vote.hint": "Eine Stimme. Niklas & Yağmur bekommen das Ergebnis als Reise-Briefing.",
     "vote.nameLabel": "Dein Name",
@@ -575,6 +579,7 @@ const I18N = {
     "selfie.hint": "İsteğe bağlı, Wall of Love'da yerini alır.",
     "selfie.frame": "Kamerayı açmak için dokun",
     "selfie.retake": "Yeniden çek",
+    "selfie.working": "Süper. Fan kulübü portren şimdiden hazırlanıyor.",
     "vote.h2": "Seyahatte neler olsun?",
     "vote.hint": "Tek oy. Sonuçlar Niklas & Yağmur'a seyahat rehberi olarak gidecek.",
     "vote.nameLabel": "Adın",
@@ -708,6 +713,11 @@ let key = "";
 let selfieDataUrl = null;
 let vote = null;
 let entryId = null;
+// Two step send. The selfie goes up the moment it is taken and the portrait edit
+// starts right away, so it is often finished by the time the vote is sent.
+let entryPromise = null;   // the create POST in flight, submit() awaits it so the vote attaches to that row
+let editPromise = null;    // the GET t=edit for entryId, runStylist() awaits it instead of fetching again
+let entrySeq = 0;          // bumps on every new selfie, so a late create response notices it was superseded
 
 function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -795,15 +805,73 @@ async function compressImage(file) {
   return c.toDataURL("image/jpeg", 0.6);
 }
 
+/* ---------- Two step send: selfie first, vote later ---------- */
+async function postJson(body) {
+  const r = await fetch(CFG.backend, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow" });
+  return r.json();
+}
+
+/**
+ * GET t=edit for one entry. Never rejects, and remembers its outcome on the
+ * promise itself so runStylist can show the picks at once when it is done.
+ */
+function fetchEdit(id) {
+  const p = fetch(`${CFG.backend}?k=${encodeURIComponent(CFG.backendKey)}&t=edit&id=${encodeURIComponent(id)}`, { redirect: "follow" })
+    .then(r => r.json())
+    .catch(e => ({ ok: false, error: String((e && e.message) || e) }));
+  p.id = id;
+  p.then(j => { p.result = j; });
+  return p;
+}
+
+/** Asks the backend to forget a row whose selfie was replaced. Fire and forget. */
+function discardEntry(id) {
+  if (!CFG.backend || !id) return;
+  postJson({ k: CFG.backendKey, id, discard: true }).catch(() => { /* idempotent on the backend, nothing to do */ });
+}
+
+/** Retake: drops the earlier upload and its portrait before the new selfie goes through step 1 again. */
+function dropEntry() {
+  if (entryId) discardEntry(entryId);
+  entryId = null; entryPromise = null; editPromise = null;
+  entrySeq++;
+  $("selfieWorking").hidden = true;
+}
+
+/**
+ * Step 1: create the row with the selfie, then kick off the portrait edit in
+ * the background without any stylist UI. If this fails, submit() simply sends
+ * everything in one call as before.
+ */
+function startEntry(dataUrl) {
+  if (!CFG.backend) return;
+  const seq = entrySeq;
+  $("selfieWorking").hidden = false;
+  entryPromise = (async () => {
+    try {
+      const j = await postJson({ k: CFG.backendKey, selfie: dataUrl, ua: navigator.userAgent.slice(0, 120) });
+      if (!j || !j.ok || !j.id) throw new Error((j && j.error) || "server");
+      if (seq !== entrySeq) { discardEntry(j.id); return; }   // the guest retook while this was uploading
+      entryId = j.id;
+      editPromise = fetchEdit(j.id);
+    } catch (e) {
+      if (seq === entrySeq) { entryId = null; editPromise = null; $("selfieWorking").hidden = true; }
+    }
+  })();
+}
+
 $("file").addEventListener("change", async (e) => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
   try {
-    selfieDataUrl = await compressImage(f);
-    if (dataUrlBytes(selfieDataUrl) > SELFIE_HARD_LIMIT) throw new Error("too large");
+    const d = await compressImage(f);
+    if (dataUrlBytes(d) > SELFIE_HARD_LIMIT) throw new Error("too large");
+    selfieDataUrl = d;
     const fr = $("frame"); fr.classList.add("has"); fr.innerHTML = `<img alt="Your selfie" src="${selfieDataUrl}">`;
     $("retake").hidden = false;
     $("stop2").classList.add("done");
+    dropEntry();      // a retake replaces the earlier upload, the backend forgets that row
+    startEntry(d);    // step 1 goes out now, the guest carries on to the vote meanwhile
   } catch (err) {
     $("err").textContent = t("vote.errPhoto"); $("err").hidden = false;
   }
@@ -813,14 +881,22 @@ $("retake").addEventListener("click", () => { $("file").value = ""; $("file").cl
 /* ---------- Submit ---------- */
 async function submit() {
   const btn = $("sendBtn"); btn.disabled = true; btn.textContent = t("vote.sending"); $("err").hidden = true;
-  const payload = { k: CFG.backendKey, name: ($("name").value || "").trim().slice(0, 60), vote, selfie: selfieDataUrl, ua: navigator.userAgent.slice(0, 120) };
+  const name = ($("name").value || "").trim().slice(0, 60);
+  const payload = { k: CFG.backendKey, name, vote, selfie: selfieDataUrl, ua: navigator.userAgent.slice(0, 120) };
   let ok = false;
   if (CFG.backend) {
     try {
-      const r = await fetch(CFG.backend, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow" });
-      const j = await r.json(); ok = !!j.ok;
+      if (entryPromise) await entryPromise;   // selfie upload still in flight: let it land so the vote attaches to it
+      let j = null;
+      if (entryId) {
+        // Step 2: attach the vote (and name) to the row created when the selfie was taken
+        j = await postJson({ k: CFG.backendKey, id: entryId, vote, name });
+        if (!j.ok && j.error === "not_found") { entryId = null; editPromise = null; j = null; }   // row is gone, send everything instead
+      }
+      if (!j) j = await postJson(payload);   // no selfie, or step 1 failed: the single call as before
+      ok = !!j.ok;
       if (!ok) throw new Error(j.error || "server");
-      entryId = j.id || null;
+      entryId = j.id || entryId || null;
     } catch (e) {
       btn.disabled = false; btn.textContent = t("vote.send");
       $("err").textContent = t("vote.errSend"); $("err").hidden = false;
@@ -883,10 +959,13 @@ function stopStylistLines() { if (stylistTimer) { clearInterval(stylistTimer); s
 
 async function runStylist(id) {
   $("stylist").hidden = false;
-  startStylistLines();
+  // The edit normally started when the selfie was taken, so wait for that promise.
+  // Only fetch here when there is none, which is the reload path where the backend
+  // answers at once with the stored result.
+  const p = (editPromise && editPromise.id === id) ? editPromise : fetchEdit(id);
+  if (!p.result) startStylistLines();   // nothing to animate when the portrait is already here
   try {
-    const r = await fetch(`${CFG.backend}?k=${encodeURIComponent(CFG.backendKey)}&t=edit&id=${encodeURIComponent(id)}`, { redirect: "follow" });
-    const j = await r.json();
+    const j = p.result || await p;
     if (j.ok && j.status === "done" && j.edited) { showPicks(id, j.orig, j.edited); return; }
     if (j.ok && j.status === "skipped") { stopStylistLines(); $("stylist").hidden = true; return; }
     throw new Error((j && j.error) || "no result");
