@@ -719,6 +719,21 @@ let entryPromise = null;   // the create POST in flight, submit() awaits it so t
 let editPromise = null;    // the GET t=edit for entryId, runStylist() awaits it instead of fetching again
 let entrySeq = 0;          // bumps on every new selfie, so a late create response notices it was superseded
 
+/**
+ * Row id, made on the phone. The backend is idempotent on it, so a create whose
+ * answer got lost (Apps Script now and then returns a Drive HTML page after a
+ * minute although the row was written) can be repeated with the same id
+ * without leaving a second, nameless row on the wall.
+ */
+function newId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;   // version 4
+  b[8] = (b[8] & 0x3f) | 0x80;   // variant 10xx
+  const h = Array.from(b, x => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
@@ -808,7 +823,30 @@ async function compressImage(file) {
 /* ---------- Two step send: selfie first, vote later ---------- */
 async function postJson(body) {
   const r = await fetch(CFG.backend, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow" });
-  return r.json();
+  if (!r.ok) throw new Error("HTTP " + r.status);   // Drive's HTML 404 page and friends: not an answer
+  return r.json();                                   // an HTML body throws here, which the callers treat as transport
+}
+
+// Delays before create attempt 2..4. Same id and body every time, the backend
+// answers {ok:true} for a row it already has.
+const CREATE_RETRY_DELAYS_MS = [2000, 4000, 8000];
+
+/**
+ * Step 1 with bounded retries. A network error, a non-2xx status or a body that
+ * is not JSON is repeated with the identical body; a real JSON answer, yes or
+ * no (bad_key, too_large), is final. Resolves to that answer, or to null when
+ * every attempt died on transport or the chain was cancelled. Never rejects.
+ */
+async function createEntry(body, state) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const j = await postJson(body);
+      if (j && typeof j === "object" && "ok" in j) return j;
+    } catch (e) { /* transport: fall through to the retry */ }
+    if (state.cancelled || attempt >= CREATE_RETRY_DELAYS_MS.length) return null;
+    await new Promise(res => setTimeout(res, CREATE_RETRY_DELAYS_MS[attempt]));
+    if (state.cancelled) return null;
+  }
 }
 
 /**
@@ -834,10 +872,14 @@ async function fetchEditOnce(id) {
 // likely to succeed. Five attempts spread over about half a minute cover a
 // full model run without hammering the endpoint.
 const EDIT_RETRY_DELAYS_MS = [2000, 4000, 8000, 15000];
+const EDIT_NOT_FOUND_RETRIES = 3;   // not_found on attempts 1..3 is retried, the create upload is probably still running
 
 /** True when j is a real answer from the backend that must not be retried. */
 function isFinalEditAnswer(j, state) {
   if (!j || j.transport) return false;                       // transport problem: retry
+  if (j.ok === false && j.error === "not_found") {           // the edit starts before the create is confirmed, the row may not be committed yet
+    return state.attempt > EDIT_NOT_FOUND_RETRIES;
+  }
   if (j.ok === false && j.status === undefined) {            // server said no, but gave no verdict: retry once
     if (state.softRetried) return true;
     state.softRetried = true;
@@ -886,6 +928,7 @@ function discardEntry(id) {
 /** Retake: drops the earlier upload and its portrait before the new selfie goes through step 1 again. */
 function dropEntry() {
   if (entryId) discardEntry(entryId);
+  if (entryPromise && entryPromise.state) entryPromise.state.cancelled = true; // stop repeating the create for the dropped row
   if (editPromise && editPromise.state) editPromise.state.cancelled = true;   // stop retrying for the dropped row
   entryId = null; entryPromise = null; editPromise = null;
   entrySeq++;
@@ -893,25 +936,45 @@ function dropEntry() {
 }
 
 /**
- * Step 1: create the row with the selfie, then kick off the portrait edit in
- * the background without any stylist UI. If this fails, submit() simply sends
- * everything in one call as before.
+ * Step 1: create the row with the selfie under an id made here, and kick off
+ * the portrait edit for that id right away, without waiting for the create to
+ * be confirmed: the row most likely exists even when the answer is lost, and
+ * fetchEdit retries an early not_found. entryId is set optimistically and only
+ * cleared when every create attempt failed or the backend said no; submit()
+ * then sends everything in one call as before.
  */
 function startEntry(dataUrl) {
   if (!CFG.backend) return;
   const seq = entrySeq;
+  const id = newId();
+  entryId = id;   // optimistic: this is the row's id whether or not the create answer reaches us
+  const state = { id, cancelled: false };
+  const body = { k: CFG.backendKey, id, selfie: dataUrl, ua: navigator.userAgent.slice(0, 120) };
   $("selfieWorking").hidden = false;
+  const create = createEntry(body, state);   // first attempt is dispatched here
+  editPromise = fetchEdit(id);               // starts now, alongside the create
   entryPromise = (async () => {
-    try {
-      const j = await postJson({ k: CFG.backendKey, selfie: dataUrl, ua: navigator.userAgent.slice(0, 120) });
-      if (!j || !j.ok || !j.id) throw new Error((j && j.error) || "server");
-      if (seq !== entrySeq) { discardEntry(j.id); return; }   // the guest retook while this was uploading
-      entryId = j.id;
-      editPromise = fetchEdit(j.id);
-    } catch (e) {
-      if (seq === entrySeq) { entryId = null; editPromise = null; $("selfieWorking").hidden = true; }
+    const j = await create;
+    if (seq !== entrySeq) { if (j && j.ok) discardEntry(id); return; }   // the guest retook meanwhile: make sure the row goes
+    if (j && j.ok) {
+      // Confirmed. Nudge the edit chain: cut its backoff short, or start it again
+      // when it already gave up with not_found while the upload was still running.
+      const ep = editPromise;
+      if (ep && ep.id === id && ep.state) {
+        if (!ep.state.done) { if (!ep.state.inFlight && ep.state.wake) ep.state.wake(); }
+        else if (!(ep.result && ep.result.ok)) editPromise = fetchEdit(id);
+      } else if (!ep) {
+        editPromise = fetchEdit(id);
+      }
+      return;
     }
+    // Every attempt died on transport, or a real no such as bad_key / too_large.
+    entryId = null;
+    if (editPromise && editPromise.id === id && editPromise.state) editPromise.state.cancelled = true;
+    editPromise = null;
+    $("selfieWorking").hidden = true;
   })();
+  entryPromise.state = state;   // dropEntry() cancels the retry chain through this
 }
 
 $("file").addEventListener("change", async (e) => {
@@ -991,13 +1054,19 @@ function showPicks(id, orig, edited) {
   $("stylistWait").hidden = true;
   $("picks").hidden = false;
   $("pickHint").hidden = false;
-  sendPick(id, "edited");
-  document.querySelectorAll(".pick").forEach(b => {
-    b.addEventListener("click", () => {
-      document.querySelectorAll(".pick").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+  const picks = document.querySelectorAll(".pick");
+  // The backend shows the portrait on the wall by default, so press that button from the start.
+  picks.forEach(o => o.setAttribute("aria-pressed", String(o.dataset.pick === "edited")));
+  // Refresh the wall once the default pick is stored, and once more in case the stats read raced the sheet write.
+  sendPick(id, "edited").then(() => loadStats());   // sendPick never rejects
+  setTimeout(loadStats, 3000);
+  // onclick assignment instead of addEventListener: showPicks may run again (resumeStylist), the handler must not stack.
+  picks.forEach(b => {
+    b.onclick = () => {
+      picks.forEach(o => o.setAttribute("aria-pressed", String(o === b)));
       sendPick(id, b.dataset.pick);
       setTimeout(loadStats, 400);
-    });
+    };
   });
 }
 
