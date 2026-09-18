@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Wall of Love · Niklas & Yağmur Fan Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Tokens copied from index.html so the wall matches the fan club page. The ground here is
+     the deep priory brown instead of cream, so the portraits pop on a big screen. */
+  :root {
+    --cream: #faf7f2; --parchment: #f3ede2; --paper: #ffffff;
+    --ink: #2b2722; --muted: #6f665c; --hairline: #e2d9c9;
+    --priory-50: #f6f4ef; --priory-100: #e9e3d6; --priory-200: #d6cbb4; --priory-300: #bda988; --priory-400: #a98e64;
+    --priory-700: #634d35; --priory-800: #4c3b2c; --priory-900: #3a2e24;
+    --sage-100: #e7ece4; --sage-300: #aebfa3; --sage-500: #6f8466; --sage-700: #4c5c45;
+    --heart: #EE2722;
+    --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius: 4px;
+    --fade: 1200ms;           /* cross fade, shortened under prefers-reduced-motion */
+    --drift: 20s;             /* Ken Burns duration, longer than the longest slide so it never stops mid-slide */
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: var(--priory-900); color: var(--cream); font-family: var(--sans); font-size: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  body.nocursor, body.nocursor * { cursor: none; }
+  [hidden] { display: none !important; }
+  h1, h2 { font-family: var(--serif); font-weight: 500; line-height: 1.08; letter-spacing: -0.005em; margin: 0; color: var(--cream); text-wrap: balance; }
+  p { margin: 0; }
+  .kicker { font-family: var(--sans); font-size: clamp(.7rem, .85vw, .95rem); font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--sage-300); }
+  svg.qr { display: block; width: 100%; height: auto; }
+
+  /* ----- Full-screen states ----- */
+  .screen { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 4vh 4vw; }
+  .stack { display: grid; justify-items: center; gap: clamp(10px, 2.2vh, 26px); max-width: 60vw; }
+  .badge { width: clamp(120px, 19vh, 210px); aspect-ratio: 1; border-radius: 50%; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+  .badge svg { width: 78%; height: 78%; display: block; }
+  .stack h1 { font-size: clamp(2.6rem, 6.5vh, 5.2rem); }
+  .stack .lede { font-family: var(--serif); font-size: clamp(1.2rem, 2.6vh, 1.9rem); color: var(--priory-200); max-width: 34ch; }
+  .plate { background: #fff; color: var(--priory-900); border-radius: 6px; padding: clamp(12px, 1.6vh, 20px); display: grid; justify-items: center; gap: clamp(6px, 1vh, 12px); box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+  .plate .join { font-weight: 600; letter-spacing: .01em; line-height: 1.3; text-align: center; }
+  #empty .plate { width: clamp(220px, 34vh, 360px); }
+  #empty .plate .join { font-size: clamp(.95rem, 1.7vh, 1.2rem); }
+  #locked .heart { width: 64px; height: 64px; border-radius: 50%; background: var(--sage-500); color: var(--cream); display: grid; place-items: center; font-size: 1.8rem; }
+  #locked p { color: var(--priory-300); max-width: 32ch; }
+
+  /* ----- Slideshow ----- */
+  #stage { position: fixed; inset: 0; background: var(--priory-900); }
+  .slide { position: absolute; inset: 0; opacity: 0; transition: opacity var(--fade) ease; overflow: hidden; }
+  .slide.on { opacity: 1; }
+  .slide.snap { transition: none; }
+  /* A blurred copy of the same photo fills the 16:9 screen behind the sharp, fully visible portrait. */
+  .slide .bg { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(30px) brightness(.42) saturate(.9); }
+  .slide .pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .slide .shade { position: absolute; left: 0; right: 0; bottom: 0; height: 38%; background: linear-gradient(to top, rgba(43,39,34,.88) 0%, rgba(43,39,34,.55) 42%, rgba(43,39,34,0) 100%); pointer-events: none; }
+  .slide .cap { transition: opacity .35s ease; position: absolute; left: clamp(24px, 3.2vw, 64px); bottom: clamp(22px, 3.6vh, 56px); display: grid; gap: 8px; justify-items: start; max-width: 46vw; }
+  .slide .cap.out { opacity: 0; }
+  .cap .tag { display: inline-flex; align-items: center; gap: .5em; background: var(--heart); color: #fff; font-size: clamp(.68rem, .8vw, .9rem); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; padding: .45em 1em .42em; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .cap .name { font-family: var(--serif); font-size: clamp(2rem, 3.8vw, 4.2rem); line-height: 1.02; color: var(--cream); text-shadow: 0 2px 18px rgba(0,0,0,.5); overflow-wrap: anywhere; }
+  .cap .vote { font-size: clamp(.92rem, 1.15vw, 1.25rem); color: var(--priory-100); text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+  .cap .vote .ico { margin-right: .4em; }
+
+  /* Slow drift so a static screen never looks frozen. Two directions alternate between layers. */
+  @keyframes kbA { from { transform: scale(1.03) translate(.5%, .4%); } to { transform: scale(1.10) translate(-.9%, -.6%); } }
+  @keyframes kbB { from { transform: scale(1.10) translate(-.6%, .5%); } to { transform: scale(1.03) translate(.8%, -.4%); } }
+  .slide.kb-a .pic, .slide.kb-a .bg { animation: kbA var(--drift) linear both; }
+  .slide.kb-b .pic, .slide.kb-b .bg { animation: kbB var(--drift) linear both; }
+
+  /* ----- Persistent chrome ----- */
+  .brand { position: fixed; top: clamp(18px, 3vh, 40px); left: clamp(24px, 3.2vw, 64px); font-family: var(--serif); font-size: clamp(1.1rem, 1.5vw, 1.7rem); color: var(--priory-200); opacity: .85; text-shadow: 0 1px 10px rgba(0,0,0,.6); z-index: 5; }
+  .brand .heart { color: var(--heart); }
+  #corner { position: fixed; right: clamp(20px, 2.4vw, 48px); bottom: clamp(20px, 3.4vh, 48px); width: clamp(150px, 12.5vw, 230px); z-index: 5; }
+  #corner .badge { width: 34%; box-shadow: none; border: 1px solid var(--hairline); margin-bottom: 2px; }
+  #corner .join { font-size: clamp(.72rem, .82vw, .95rem); }
+  #corner .stale { font-size: .62rem; color: var(--muted); text-align: center; line-height: 1.3; }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { --fade: 400ms; }
+    .slide .pic, .slide .bg { animation: none !important; }
+  }
+  @media (max-aspect-ratio: 4/3) {
+    .slide .cap { max-width: 70vw; }
+    .stack { max-width: 86vw; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared symbols: the I love NY logo (copied from the badge block in index.html) and the printed QR
+     (fanclub_qr_inline.svg, it already encodes the live URL with the key). Both are referenced with <use>. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="sym-logo" viewBox="-6.7884 -87.2134 96.9767 96.9767">
+    <g transform="scale(83.36971,-77.42294)">
+      <path fill="#EE2722" d="M 0.5349,0.9997 C 0.5558,1.0012 0.5747,0.9968 0.5936,0.9852 0.5961,0.9837 0.6041,0.9785 0.6062,0.9765 0.6087,0.974 0.6261,0.9593 0.6295,0.9545 0.6312,0.9522 0.6478,0.9306 0.6478,0.9306 c 0,0 0.0158,0.0181 0.0186,0.0212 C 0.6712,0.9569 0.6757,0.9602 0.6792,0.963 0.6894,0.9713 0.6998,0.9787 0.7115,0.9859 0.7197,0.991 0.7338,0.9957 0.7413,0.9968 0.7434,0.9971 0.749,0.9979 0.7515,0.9983 0.78,1.0027 0.8169,0.9903 0.8378,0.9773 0.8609,0.963 0.8768,0.9419 0.8891,0.9155 0.8918,0.9096 0.898,0.8939 0.8992,0.89 0.9057,0.8691 0.9072,0.8427 0.9053,0.8166 0.9024,0.776 0.8862,0.7343 0.8689,0.7091 0.8654,0.7041 0.8574,0.6895 0.8477,0.6769 0.8154,0.6353 0.7676,0.5835 0.7195,0.5507 0.706,0.5415 0.6543,0.511 0.6543,0.511 c 0,0 -0.0539,0.0324 -0.0625,0.0381 C 0.5373,0.5855 0.4771,0.6371 0.4435,0.6954 0.4318,0.7157 0.4183,0.7362 0.4106,0.761 0.407,0.7724 0.4038,0.7822 0.4013,0.7949 0.3954,0.8248 0.3972,0.86 0.4051,0.8879 0.4086,0.9003 0.4138,0.9136 0.4188,0.9242 0.4369,0.9621 0.4705,0.987 0.5147,0.9967 c 0.007,0.0015 0.0137,0.0026 0.0202,0.003"/>
+      <path fill="#000000" d="M 0.3091,0.9988 C 0.3115,0.999 0.314,0.9977 0.3157,0.9974 0.3284,0.9949 0.3337,0.9912 0.3387,0.9803 0.3495,0.957 0.3357,0.9359 0.317,0.9315 0.2972,0.9269 0.271,0.938 0.2611,0.9217 0.2546,0.911 0.2583,0.8777 0.2584,0.8631 0.2585,0.8452 0.2582,0.828 0.2592,0.8101 0.2597,0.8019 0.2587,0.7926 0.2597,0.7847 0.2604,0.7787 0.259,0.7724 0.2595,0.7671 0.2609,0.7539 0.2612,0.7387 0.2608,0.7242 0.2602,0.7047 0.2612,0.687 0.261,0.6684 0.2608,0.6563 0.2596,0.6438 0.2611,0.6316 0.262,0.6251 0.2634,0.6174 0.2663,0.6129 0.2808,0.591 0.3255,0.6173 0.3408,0.5917 0.3419,0.5898 0.3432,0.588 0.3439,0.5857 0.3442,0.5845 0.3444,0.5835 0.3447,0.5821 0.348,0.567 0.3428,0.5536 0.3342,0.5475 0.333,0.5467 0.3311,0.5455 0.33,0.5451 0.3209,0.5416 0.3062,0.5417 0.2943,0.5428 0.2778,0.5444 0.2625,0.5427 0.2471,0.5441 0.2324,0.5453 0.2145,0.5458 0.1986,0.5441 0.1847,0.5425 0.1686,0.5423 0.1548,0.5414 0.1482,0.541 0.1422,0.5392 0.135,0.5406 0.1257,0.5423 0.1176,0.5473 0.1136,0.5549 0.1061,0.5692 0.1085,0.5902 0.1198,0.5985 0.1229,0.6007 0.1269,0.6015 0.131,0.6028 0.1525,0.61 0.1804,0.5956 0.1918,0.6159 c 0.0073,0.0129 0.0018,0.046 0.0031,0.0642 0.0011,0.0161 -10e-5,0.0358 -5e-4,0.0509 -6e-4,0.0231 -8e-4,0.0793 -8e-4,0.0793 -8e-4,0.0238 8e-4,0.0482 -8e-4,0.0713 -6e-4,0.0093 0.0011,0.0176 0,0.0269 -6e-4,0.005 -0.0018,0.01 -0.0039,0.0136 C 0.1802,0.937 0.1484,0.9277 0.1311,0.9301 0.1227,0.9312 0.1165,0.9363 0.1115,0.9413 0.1051,0.9476 0.1013,0.9626 0.105,0.9747 c 0.0011,0.0034 0.002,0.0062 0.0038,0.0087 0.0045,0.0068 0.0119,0.0113 0.0213,0.0128 0.0068,0.001 0.0137,3e-4 0.0201,0 0.0164,-9e-4 0.0329,-6e-4 0.0488,-0.0014 0.037,-0.002 0.0739,8e-4 0.1101,0.004"/>
+      <path fill="#000000" d="M 0.688,0.4633 C 0.6972,0.4643 0.7096,0.463 0.7162,0.4592 0.7242,0.4544 0.7278,0.4461 0.7298,0.4347 0.7331,0.4157 0.7213,0.4021 0.7082,0.3981 0.7036,0.3967 0.6969,0.3969 0.6927,0.3962 0.6867,0.3952 0.679,0.3993 0.6729,0.3957 0.6728,0.3956 0.6705,0.3931 0.6703,0.392 0.6697,0.3894 0.6699,0.3855 0.6721,0.3821 0.6726,0.3814 0.6854,0.3593 0.6904,0.3498 0.7084,0.3162 0.7265,0.2828 0.7439,0.249 0.7462,0.2445 0.7475,0.2438 0.7475,0.2438 c 0,0 0.008,0.0119 0.0091,0.014 0.0117,0.0218 0.0237,0.0435 0.0357,0.0655 0.005,0.0092 0.0106,0.0182 0.0147,0.0283 9e-4,0.0022 0.0147,0.0284 0.0156,0.0291 0.0011,0.001 0.0018,0.0032 0.0025,0.0048 0.003,0.0066 4e-4,0.0098 -0.0056,0.0109 C 0.8146,0.3973 0.8085,0.396 0.8046,0.3953 0.7998,0.3946 0.7922,0.3962 0.7874,0.3969 0.7693,0.3996 0.7572,0.4194 0.7636,0.4407 0.766,0.4487 0.7728,0.457 0.7805,0.4592 c 0.0182,0.0052 0.0396,-7e-4 0.0592,-4e-4 0.0232,4e-4 0.0488,10e-5 0.0701,2e-4 0.0223,10e-5 0.0422,0.0052 0.065,0.0024 C 0.9836,0.4603 0.9912,0.4549 0.9953,0.4485 0.9989,0.443 1.0005,0.4347 0.9999,0.4258 0.9995,0.4201 0.9939,0.4075 0.9934,0.4068 0.978,0.3861 0.9471,0.4 0.9226,0.3931 c 0,0 -0.0037,-4e-4 -0.0056,-9e-4 C 0.9137,0.3915 0.9081,0.3888 0.9055,0.3868 0.8918,0.3764 0.8821,0.3531 0.8732,0.3371 0.8527,0.2998 0.8298,0.2637 0.8099,0.2259 0.8051,0.2167 0.7914,0.1943 0.7903,0.1922 0.788,0.1878 0.7843,0.1837 0.7827,0.1786 0.7802,0.1707 0.7818,0.1565 0.7816,0.1469 0.7813,0.1286 0.7791,0.111 0.7814,0.0932 0.7821,0.0879 0.7848,0.0818 0.7876,0.0785 0.797,0.0676 0.8203,0.0744 0.8345,0.0743 0.8449,0.0743 0.854,0.0709 0.8601,0.066 0.8747,0.0542 0.8709,0.0306 0.8603,0.018 0.8568,0.0138 0.8514,0.011 0.8467,0.0095 0.8383,0.0088 0.8267,0.008 0.8219,0.0084 0.7912,0.0115 0.7577,0.0139 0.7265,0.0114 0.7187,0.0108 0.7108,0.0122 0.7024,0.011 0.6896,0.0093 0.6691,0.0065 0.655,0.0084 0.6493,0.0092 0.6432,0.0126 0.6396,0.0159 0.6383,0.017 0.6376,0.0186 0.6362,0.0196 0.6329,0.0218 0.6313,0.0271 0.6299,0.0313 0.6208,0.0571 0.6424,0.0759 0.6665,0.0726 0.681,0.0706 0.6981,0.071 0.7066,0.0796 c 0.0086,0.0087 0.0063,0.0242 0.0075,0.0406 9e-4,0.0133 -10e-5,0.0276 8e-4,0.0403 3e-4,0.0048 0.0011,0.0101 0,0.0146 C 0.7138,0.1797 0.7106,0.1829 0.7087,0.1866 0.7018,0.2001 0.6927,0.2123 0.6859,0.2255 0.6734,0.2496 0.6595,0.2722 0.646,0.2953 0.639,0.3073 0.6332,0.3207 0.6252,0.332 0.6169,0.3437 0.6102,0.3575 0.6027,0.3702 0.6005,0.3738 0.5984,0.3764 0.5954,0.3809 0.5927,0.384 0.5888,0.3861 0.5858,0.3882 0.5814,0.3913 0.5757,0.3951 0.5699,0.3964 0.5443,0.4022 0.5109,0.3884 0.4977,0.4103 0.4894,0.4241 0.4918,0.4477 0.5031,0.4565 0.5079,0.4603 0.5148,0.4615 0.5215,0.4626 0.5356,0.465 0.5505,0.4607 0.5643,0.4614 0.606,0.4637 0.6475,0.4589 0.688,0.4633"/>
+      <path fill="#000000" d="m 0.0395,0.4668 c 0.0026,3e-4 0.0042,-9e-4 0.0063,-8e-4 C 0.06,0.4661 0.0746,0.4657 0.088,0.4653 0.1108,0.4645 0.1587,0.4702 0.1755,0.4597 0.1993,0.4449 0.2064,0.4166 0.2181,0.3887 0.2235,0.3757 0.2293,0.3627 0.2344,0.3488 0.2429,0.3256 0.2549,0.3034 0.2618,0.2789 0.2639,0.2714 0.2688,0.263 0.2718,0.2557 0.2798,0.2362 0.2868,0.2171 0.2943,0.1976 0.2981,0.188 0.3034,0.1778 0.3068,0.1681 0.3097,0.1598 0.3317,0.1082 0.3317,0.1082 c 0,0 -3e-4,0.0157 -5e-4,0.0204 -4e-4,0.0149 3e-4,0.0271 0.0014,0.0418 9e-4,0.0137 2e-4,0.0271 10e-5,0.0403 -10e-5,0.0122 0.0011,0.0251 5e-4,0.0368 -5e-4,0.0099 -0.0012,0.0237 -3e-4,0.0336 0.0015,0.0172 4e-4,0.0635 3e-4,0.0642 -7e-4,0.0095 5e-4,0.0204 -3e-4,0.03 C 0.3324,0.3804 0.3307,0.3864 0.3282,0.3901 0.3186,0.4042 0.2972,0.397 0.2791,0.3985 0.2677,0.3994 0.26,0.4036 0.253,0.4091 0.2498,0.4117 0.2461,0.4155 0.2451,0.4203 0.238,0.4549 0.2625,0.4674 0.2935,0.4649 c 0.0061,-5e-4 0.0113,6e-4 0.0169,-7e-4 7e-4,-2e-4 0.0022,-7e-4 0.0022,-7e-4 0.0061,0.001 0.0139,-8e-4 0.0198,-0.0016 0.0114,-0.0015 0.0241,2e-4 0.0351,-0.001 0.0038,-4e-4 0.0104,4e-4 0.0148,0.0012 0.0019,4e-4 0.0196,-6e-4 0.0265,2e-4 C 0.4259,0.4642 0.4436,0.4673 0.461,0.4642 0.471,0.4624 0.48,0.4548 0.4835,0.4459 0.4914,0.4253 0.4835,0.4115 0.4715,0.4021 0.4549,0.3893 0.419,0.4041 0.404,0.3901 0.4018,0.3881 0.3998,0.3839 0.3988,0.3809 0.397,0.3753 0.3981,0.3655 0.3985,0.3601 0.3992,0.3493 0.3974,0.3386 0.398,0.3261 c 2e-4,-0.0045 -6e-4,-0.035 0,-0.043 0.0011,-0.0159 -0.0011,-0.0313 0,-0.0473 7e-4,-0.0116 0,-0.0274 -8e-4,-0.0392 C 0.3965,0.1868 0.3982,0.179 0.3975,0.1688 0.396,0.1473 0.3974,0.125 0.3967,0.1047 0.3961,0.0882 0.3999,0.0594 0.3951,0.0457 0.3942,0.0432 0.3939,0.0408 0.3933,0.0382 0.3905,0.026 0.3832,0.0171 0.3751,0.0103 0.3635,6e-4 0.3426,-0.0029 0.324,0.0027 0.3101,0.0068 0.2983,0.0179 0.2919,0.0302 0.2772,0.0582 0.265,0.0934 0.2537,0.1244 0.2436,0.152 0.231,0.1786 0.2212,0.2067 0.219,0.2127 0.2153,0.219 0.2132,0.2248 0.2075,0.241 0.2009,0.256 0.1948,0.2715 0.1887,0.2868 0.1837,0.302 0.1773,0.3165 0.1738,0.3244 0.1584,0.3698 0.1541,0.3714 0.1511,0.3605 0.1546,0.3461 0.1539,0.3355 0.1527,0.3145 0.1538,0.2888 0.1535,0.2681 0.1527,0.227 0.1519,0.1912 0.1535,0.1497 0.1542,0.1291 0.1488,0.1008 0.157,0.0855 0.1574,0.0848 0.1575,0.084 0.158,0.0834 0.1769,0.0608 0.2185,0.0912 0.236,0.0571 0.2446,0.0404 0.2359,0.0191 0.2236,0.0133 0.2172,0.0103 0.2076,0.0092 0.1996,0.01 0.1956,0.0104 0.19,0.0089 0.186,0.0096 0.1796,0.0109 0.1731,0.0099 0.1658,0.011 0.1527,0.0131 0.1398,0.0133 0.1255,0.0131 0.1119,0.013 0.1006,0.0129 0.0872,0.0128 0.0824,0.0127 0.0774,0.0113 0.0727,0.0119 0.0515,0.0145 0.0198,0.0019 0.0074,0.0199 0.0022,0.0275 -0.0027,0.041 0.0017,0.0529 0.004,0.059 0.0055,0.0638 0.0097,0.0677 0.015,0.0727 0.0234,0.0751 0.0322,0.0763 0.038,0.077 0.043,0.0748 0.0482,0.0743 0.0633,0.0731 0.0799,0.0771 0.0846,0.0879 c 0.002,0.0046 0.0013,0.0093 0.0022,0.0157 0.0018,0.0149 -5e-4,0.0305 6e-4,0.0457 3e-4,0.0041 -4e-4,0.0172 -4e-4,0.0208 1e-4,0.0215 0.001,0.0323 2e-4,0.043 -0.0017,0.0248 0.0019,0.0483 5e-4,0.0722 -5e-4,0.0087 4e-4,0.0169 -1e-4,0.0251 -2e-4,0.0019 0,0.0059 0,0.0059 0,0.0165 0.0015,0.0337 -2e-4,0.0501 -8e-4,0.0078 5e-4,0.0152 -0.0013,0.022 C 0.0792,0.4138 0.022,0.3861 0.0103,0.4114 0.008,0.4164 0.0043,0.421 0.003,0.4276 -7e-4,0.4474 0.0133,0.4608 0.0259,0.4651 0.0304,0.4666 0.0353,0.4664 0.0395,0.4668"/>
+    </g>
+  </symbol>
+  <symbol id="sym-qr" viewBox="0 0 312 312">
+    <g transform="scale(8)"><path fill="#fff" d="M0 0h39v39h-39z"/><path stroke="#0b0b0b" d="M1 1.5h7m3 0h1m5 0h2m1 0h1m1 0h1m1 0h1m6 0h7m-37 1h1m5 0h1m1 0h1m1 0h4m3 0h1m1 0h2m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-37 1h1m1 0h3m1 0h1m1 0h1m5 0h5m1 0h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h4m4 0h2m2 0h1m2 0h3m4 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h4m2 0h1m3 0h2m1 0h2m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m1 0h6m1 0h1m5 0h1m1 0h1m4 0h1m1 0h1m5 0h1m-37 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-28 1h1m2 0h4m4 0h1m1 0h1m1 0h1m2 0h2m-27 1h1m2 0h4m5 0h1m1 0h5m1 0h1m1 0h3m1 0h2m1 0h5m-35 1h3m1 0h1m2 0h1m3 0h1m6 0h1m2 0h1m1 0h2m4 0h2m2 0h3m-37 1h1m4 0h4m1 0h1m1 0h2m2 0h7m1 0h1m2 0h1m1 0h3m2 0h1m1 0h1m-37 1h2m1 0h2m2 0h1m2 0h4m2 0h1m3 0h2m4 0h1m4 0h1m1 0h1m1 0h1m-35 1h4m1 0h1m4 0h2m1 0h3m3 0h3m1 0h1m3 0h1m1 0h2m1 0h1m1 0h1m-36 1h1m4 0h1m2 0h1m4 0h2m2 0h1m3 0h4m2 0h5m2 0h1m1 0h1m-35 1h1m1 0h1m1 0h3m1 0h2m1 0h4m1 0h1m1 0h3m3 0h2m1 0h1m2 0h3m1 0h1m-37 1h5m3 0h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h6m4 0h1m1 0h1m1 0h1m1 0h2m-36 1h3m1 0h5m2 0h2m1 0h5m1 0h1m2 0h1m1 0h1m3 0h1m4 0h1m-36 1h1m1 0h1m1 0h2m2 0h1m2 0h1m1 0h5m2 0h3m2 0h1m1 0h2m1 0h2m1 0h2m1 0h1m-32 1h2m1 0h1m1 0h4m1 0h2m2 0h1m2 0h3m2 0h1m1 0h2m2 0h2m1 0h1m-35 1h1m4 0h1m1 0h1m3 0h1m2 0h2m1 0h1m3 0h1m2 0h1m1 0h1m1 0h1m2 0h1m-31 1h2m1 0h1m1 0h2m1 0h2m2 0h3m1 0h1m2 0h3m1 0h1m1 0h3m2 0h1m1 0h1m-36 1h1m2 0h1m3 0h3m1 0h5m1 0h2m2 0h2m2 0h3m2 0h2m1 0h1m2 0h1m-36 1h1m3 0h4m3 0h3m1 0h1m5 0h2m3 0h2m1 0h5m1 0h1m-37 1h1m1 0h1m1 0h1m3 0h1m2 0h3m1 0h1m2 0h1m3 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m-35 1h1m3 0h2m2 0h3m2 0h1m1 0h3m1 0h1m2 0h3m4 0h1m2 0h1m-32 1h1m2 0h1m2 0h2m1 0h3m2 0h1m3 0h1m3 0h2m1 0h2m1 0h2m1 0h2m1 0h1m-37 1h2m1 0h2m1 0h4m1 0h2m1 0h1m1 0h2m2 0h2m2 0h1m2 0h4m2 0h2m1 0h1m-35 1h1m4 0h1m2 0h1m5 0h4m1 0h1m1 0h2m2 0h7m1 0h2m-37 1h2m1 0h4m1 0h1m1 0h1m1 0h2m2 0h2m1 0h4m5 0h6m2 0h1m-29 1h4m1 0h2m7 0h2m1 0h1m2 0h1m3 0h2m2 0h1m-37 1h7m1 0h1m1 0h1m1 0h2m1 0h4m4 0h1m4 0h1m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m1 0h2m1 0h1m4 0h3m3 0h2m3 0h2m3 0h2m1 0h1m-36 1h1m1 0h3m1 0h1m6 0h2m3 0h3m1 0h1m4 0h6m2 0h1m-36 1h1m1 0h3m1 0h1m2 0h2m1 0h1m4 0h3m5 0h1m2 0h1m2 0h2m3 0h1m-37 1h1m1 0h3m1 0h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h4m8 0h1m1 0h3m-37 1h1m5 0h1m4 0h2m1 0h1m3 0h1m3 0h1m3 0h1m1 0h1m4 0h1m-34 1h7m2 0h2m1 0h1m5 0h7m3 0h1m1 0h2m4 0h1"/></g>
+  </symbol>
+</svg>
+
+<!-- Gate -->
+<section class="screen" id="locked" hidden>
+  <div class="stack">
+    <span class="heart" aria-hidden="true">♥</span>
+    <h1>Members only.</h1>
+    <p>Open this page from the fan club link with its key.</p>
+  </div>
+</section>
+
+<!-- Empty state, before the first guest uploads -->
+<section class="screen" id="empty" hidden>
+  <div class="stack">
+    <div class="badge" aria-label="I love NY button"><svg viewBox="0 0 96.9767 96.9767" aria-hidden="true"><use href="#sym-logo"/></svg></div>
+    <p class="kicker">The I ♥ NY Fan Club presents</p>
+    <h1>Niklas &amp; Yağmur<br>Wall of Love</h1>
+    <p class="lede">Grab a button, take a selfie, and your New York portrait shows up here.</p>
+    <div class="plate">
+      <svg class="qr" viewBox="0 0 312 312" role="img" aria-label="QR code to the fan club page"><use href="#sym-qr"/></svg>
+      <p class="join">Scan to join the fan club</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slideshow: two layers that alternate, the incoming one fades in on top -->
+<div id="stage" hidden aria-live="off">
+  <div class="slide" id="slideA">
+    <img class="bg" alt="" aria-hidden="true" decoding="async">
+    <img class="pic" alt="" decoding="async">
+    <div class="shade"></div>
+    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="vote"></span></div>
+  </div>
+  <div class="slide" id="slideB">
+    <img class="bg" alt="" aria-hidden="true" decoding="async">
+    <img class="pic" alt="" decoding="async">
+    <div class="shade"></div>
+    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="vote"></span></div>
+  </div>
+</div>
+
+<p class="brand" id="brand" hidden>Niklas &amp; Yağmur <span class="heart">♥</span> Wall of Love</p>
+
+<div class="plate" id="corner" hidden>
+  <div class="badge" aria-hidden="true"><svg viewBox="0 0 96.9767 96.9767"><use href="#sym-logo"/></svg></div>
+  <svg class="qr" viewBox="0 0 312 312" role="img" aria-label="QR code to the fan club page"><use href="#sym-qr"/></svg>
+  <p class="join">Scan to join the fan club</p>
+  <p class="stale" id="stale" hidden>Live updates paused, retrying</p>
+</div>
+
+<script>
+/* ---------- Configuration (same values as index.html) ---------- */
+const CFG = {
+  backend: "https://script.google.com/macros/s/AKfycbwSbbUZSqiAoyzUXrqjtIgqUJAZ2JI24D_mJY1w7rQAxJUuqhUTdeybOg5icuRp-n-3/exec",
+  keyHash: "3c82d69b44c29026606f4a1be9692ca224946fd994acb48a9a11df8b3a844998",
+  backendKey: "70f65d43437f",
+};
+
+// English vote labels, copied from I18N "vote.opt.*" and the icons from VOTES in index.html.
+// Ids the page no longer offers (museum, designer) fall through and the caption shows no vote line.
+const VOTES = {
+  show:    { ico: "🎟️", label: "Broadway or a concert" },
+  thrift:  { ico: "🛍️", label: "A shopping spree" },
+  club:    { ico: "🪩", label: "A proper club night" },
+  food:    { ico: "🍕", label: "Eat their way through the city" },
+  rooftop: { ico: "🍸", label: "Rooftop drinks at sunset" },
+  stay:    { ico: "🏙️", label: "A night somewhere fancy" },
+};
+
+/* ---------- Timing ---------- */
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SLIDE_MS = 7000;        // normal slide
+const BURST_MS = 11000;       // a just-arrived photo is held a little longer
+const FADE_MS = REDUCED ? 400 : 1200;
+const POLL_MS = 20000;
+const FETCH_TIMEOUT_MS = 15000;
+const INTERRUPT_MS = 1200;    // a new arrival cuts in after about this long
+const MIN_ON_MS = 1800;       // but never before the current slide has been fully visible
+const STALE_MS = 120000;      // show the discreet "paused" note after this long without a good poll
+const HISTORY_MAX = 16;
+const BURST_QUEUE_MAX = 8;
+const HI_SIZE = "w1600";      // Drive thumbnail size for the big screen, the w480 URL stays as the placeholder
+
+/* PICKER-BEGIN (pure, extracted verbatim for the numerical test) */
+/*
+ * Recency weighting. weight = exp(-age / TAU) + FLOOR.
+ *
+ * TAU = 180 s ("roughly 3 minutes"). At a 7 s party pace this gives, against a settled pool
+ * of 30 older photos (30 x FLOOR = 0.6 total weight):
+ *   age 30 s   -> 0.86  -> about 58% of eligible picks, i.e. back on screen every 2nd or 3rd slide
+ *   age 2 min  -> 0.53  -> about 47%, still every ~3 slides
+ *   age 5 min  -> 0.21  -> about 26%, every ~5 slides (35 s)
+ *   age 10 min -> 0.06  -> about 9%,  every ~12 slides (1.5 min)
+ *   age 20 min -> 0.02  -> the floor: every ~30 slides (3.5 min), same as a photo from an hour ago
+ * So the newest photo keeps coming back for a few minutes, then settles into the mix, while
+ * nothing ever drops out completely. The floor of 0.02 (2% of a brand-new photo) is what keeps
+ * hour-old photos appearing occasionally; with 40 stored photos that is still one in every ~25
+ * slides for each of them once nothing fresh is around.
+ *
+ * Repeat rules: the last shown photo is never picked again immediately (hard rule). Photos
+ * older than FRESH_MS that were shown within the last RECENT_R picks are held back until the
+ * others had a turn; fresh photos are exempt from that hold, which is what lets a new arrival
+ * keep returning. If the rules leave nothing, fall back to "anything but the last one".
+ */
+const TAU_MS = 180 * 1000;
+const FLOOR = 0.02;
+const FRESH_MS = 5 * 60 * 1000;
+const RECENT_R = 8;
+
+function recencyWeight(ageMs) { return Math.exp(-Math.max(0, ageMs) / TAU_MS) + FLOOR; }
+
+/** entries: [{key, freshAt, dead}], history: [key,...] oldest first, now: ms, rand: () => [0,1). */
+function pickNext(entries, history, now, rand) {
+  const live = entries.filter(e => !e.dead);
+  if (!live.length) return null;
+  if (live.length === 1) return live[0];
+  const last = history.length ? history[history.length - 1] : null;
+  const recent = new Set(history.slice(-Math.min(live.length - 1, RECENT_R)));
+  let pool = live.filter(e => e.key !== last && (!recent.has(e.key) || (now - e.freshAt) < FRESH_MS));
+  if (!pool.length) pool = live.filter(e => e.key !== last);
+  const w = pool.map(e => recencyWeight(now - e.freshAt));
+  let x = rand() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) { x -= w[i]; if (x <= 0) return pool[i]; }
+  return pool[pool.length - 1];
+}
+/* PICKER-END */
+
+/* ---------- State ---------- */
+const $ = id => document.getElementById(id);
+let known = new Map();        // key (orig URL) -> entry, replaced wholesale on every good poll, so it never grows past the backend's list
+let entries = [];             // known.values() as an array
+let history = [];             // keys of recently shown photos, bounded by HISTORY_MAX
+let burstQueue = [];          // [{e, label}] new arrivals waiting for their moment, bounded by BURST_QUEUE_MAX
+let firstPollDone = false;    // the first good poll seeds the pool silently, only later arrivals burst
+let mode = "empty";           // "empty" | "show"
+let layer = 0;                // which of the two slide layers is on screen
+let slideGen = 0;             // bumps per slide, so late image loads for an old slide are ignored
+let slideTimer = null, fadeTimer = null, pollTimer = null, cursorTimer = null;
+let pollSeq = 0;              // guards against two poll chains after a resync
+let shownAt = 0, currentHold = SLIDE_MS, currentIsBurst = false, current = null;
+let lastGood = 0;
+let preload = null;           // the one Image() loading the hi-res of the slide on screen
+let prefetch = null;          // the one Image() warming the cache for the likely next slide
+let nextPick = null;
+const slides = [$("slideA"), $("slideB")];
+
+/* ---------- Gate (same helper and check as index.html) ---------- */
+async function sha256(s) {
+  if (!(crypto && crypto.subtle)) return null;
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function gate() {
+  const params = new URLSearchParams(location.search);
+  const key = params.get("k") || (function () { try { return sessionStorage.getItem("fanclub_k") || ""; } catch (e) { return ""; } })();
+  if (!CFG.keyHash) return true;
+  const h = key ? await sha256(key) : null;
+  const ok = h === CFG.keyHash;
+  if (ok) { try { sessionStorage.setItem("fanclub_k", key); } catch (e) {} }
+  return ok;
+}
+
+/* ---------- Data ---------- */
+function hiRes(url) { return /[?&]sz=w\d+/.test(url) ? url.replace(/([?&]sz=)w\d+/, "$1" + HI_SIZE) : url; }
+function parseTs(ts, fallback) { const t = Date.parse(ts || ""); return Number.isFinite(t) ? Math.min(t, fallback) : fallback; }
+
+async function poll() {
+  const my = ++pollSeq;
+  clearTimeout(pollTimer);
+  let ok = false;
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    const r = await fetch(`${CFG.backend}?k=${encodeURIComponent(CFG.backendKey)}&t=stats`, { redirect: "follow", cache: "no-store", signal: ctrl.signal });
+    clearTimeout(to);
+    const j = await r.json();
+    if (j && j.ok && Array.isArray(j.selfies)) { ingest(j.selfies); ok = true; }
+  } catch (e) { /* keep showing what we have, try again next round */ }
+  if (ok) lastGood = Date.now();
+  updateStale();
+  if (my === pollSeq) pollTimer = setTimeout(poll, POLL_MS);
+}
+
+function ingest(list) {
+  const now = Date.now();
+  const next = new Map();
+  const fresh = [];
+  for (const s of list) {
+    if (!s || typeof s !== "object") continue;
+    const url = s.url || s.orig; if (!url) continue;
+    const key = s.orig || url;
+    const edited = s.edited || null;
+    const styled = !!(edited && url === edited);
+    let e = known.get(key);
+    if (!e) {
+      e = { key, url, edited, styled, name: String(s.name || "").trim(), vote: String(s.vote || ""), dead: false,
+            freshAt: firstPollDone ? now : parseTs(s.ts, now) };
+      if (firstPollDone) fresh.push({ e, label: "Just joined the fan club" });
+    } else {
+      e.name = String(s.name || e.name || "").trim();
+      e.vote = String(s.vote || "");
+      if (e.url !== url) { e.url = url; e.dead = false; }
+      // The guest picked their freshly styled portrait: treat it like a new arrival, that is the moment the wall is for.
+      if (styled && !e.styled && firstPollDone) { e.freshAt = now; fresh.push({ e, label: "Fresh from the stylist" }); }
+      e.edited = edited; e.styled = styled;
+    }
+    next.set(key, e);
+  }
+  known = next;
+  entries = Array.from(known.values());
+  firstPollDone = true;
+  // The list is newest first; queue arrivals oldest first so a burst plays in arrival order.
+  fresh.reverse().forEach(f => { if (!burstQueue.some(b => b.e === f.e)) burstQueue.push(f); });
+  if (burstQueue.length > BURST_QUEUE_MAX) burstQueue.splice(0, burstQueue.length - BURST_QUEUE_MAX);
+  burstQueue = burstQueue.filter(b => known.has(b.e.key));
+  if (nextPick && !known.has(nextPick.key)) nextPick = null;
+
+  if (entries.some(e => !e.dead)) {
+    if (mode !== "show") startShow();
+    else if (fresh.length) interruptSoon();
+  } else if (mode === "show") {
+    showEmpty();
+  }
+}
+
+function updateStale() {
+  $("stale").hidden = !(lastGood && Date.now() - lastGood > STALE_MS);
+}
+
+/* ---------- Show ---------- */
+function showEmpty() {
+  mode = "empty";
+  clearTimeout(slideTimer); clearTimeout(fadeTimer);
+  current = null; nextPick = null;
+  $("stage").hidden = true; $("corner").hidden = true; $("brand").hidden = true;
+  $("empty").hidden = false;
+}
+
+function startShow() {
+  mode = "show";
+  $("empty").hidden = true;
+  $("stage").hidden = false; $("corner").hidden = false; $("brand").hidden = false;
+  advance();
+}
+
+function advance() {
+  clearTimeout(slideTimer);
+  if (mode !== "show") return;
+  let e = null, label = null, hold = SLIDE_MS;
+  while (burstQueue.length && !e) {
+    const b = burstQueue.shift();
+    if (known.has(b.e.key) && !b.e.dead) { e = b.e; label = b.label; hold = BURST_MS; }
+  }
+  if (!e && nextPick && known.has(nextPick.key) && !nextPick.dead && (!current || nextPick !== current)) e = nextPick;
+  if (!e) e = pickNext(entries, history, Date.now(), Math.random);
+  nextPick = null;
+  if (!e) { showEmpty(); return; }
+  showSlide(e, label);
+  history.push(e.key); if (history.length > HISTORY_MAX) history.shift();
+  current = e; currentIsBurst = !!label; currentHold = hold; shownAt = Date.now();
+  slideTimer = setTimeout(advance, hold);
+  // Warm the cache for the likely next slide, so its hi-res is ready when the fade starts.
+  if (!burstQueue.length) {
+    nextPick = pickNext(entries, history, Date.now() + hold, Math.random);
+    if (nextPick && nextPick !== e) {
+      if (prefetch) { prefetch.onload = prefetch.onerror = null; }
+      prefetch = new Image();
+      prefetch.onload = prefetch.onerror = () => { prefetch = null; };
+      prefetch.src = hiRes(nextPick.url);
+    }
+  }
+}
+
+function interruptSoon() {
+  if (mode !== "show" || currentIsBurst) return;   // let a burst slide finish, the queue plays right after
+  const since = Date.now() - shownAt;
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(advance, Math.max(INTERRUPT_MS, MIN_ON_MS - since));
+}
+
+function setSrc(el, src, stage) {
+  const pic = el.querySelector(".pic"), bg = el.querySelector(".bg");
+  pic.dataset.stage = stage;
+  pic.src = src; bg.src = src;
+}
+
+function showSlide(e, label) {
+  const gen = ++slideGen;
+  layer ^= 1;
+  const el = slides[layer], old = slides[layer ^ 1];
+
+  // Caption (the outgoing layer's caption fades out at once, so two captions never overlap)
+  const cap = el.querySelector(".cap");
+  cap.classList.remove("out"); old.querySelector(".cap").classList.add("out");
+  const tag = cap.querySelector(".tag"), name = cap.querySelector(".name"), vote = cap.querySelector(".vote");
+  tag.hidden = !label; tag.textContent = label ? (e.name ? `${label} · ${e.name}` : label) : "";
+  name.textContent = e.name || "";
+  name.hidden = !e.name;
+  const v = VOTES[e.vote];
+  vote.hidden = !v;
+  vote.textContent = "";
+  if (v) { const ico = document.createElement("span"); ico.className = "ico"; ico.textContent = v.ico; vote.append(ico, v.label); }
+
+  // Images: the w480 placeholder shows at once, the w1600 swaps in when it has loaded.
+  const lo = e.url, hi = hiRes(e.url);
+  const pic = el.querySelector(".pic");
+  pic.onerror = () => {
+    if (gen !== slideGen) return;
+    if (pic.dataset.stage === "hi" && hi !== lo) { setSrc(el, lo, "lo"); return; }
+    e.dead = true;                                 // the placeholder failed too: skip this photo
+    layer ^= 1;                                    // reuse this layer, so the replacement fades in over the last good photo
+    clearTimeout(slideTimer); slideTimer = setTimeout(advance, 50);
+  };
+  if (preload) { preload.onload = preload.onerror = null; }
+  preload = null;
+  const ready = prefetch && prefetch.src === hi && prefetch.complete && prefetch.naturalWidth > 0;
+  if (ready) { setSrc(el, hi, "hi"); }                   // prefetched earlier, no need for the placeholder
+  else setSrc(el, lo, "lo");
+  if (hi !== lo && !ready) {
+    const im = new Image();
+    preload = im;
+    im.onload = () => { if (gen === slideGen) setSrc(el, hi, "hi"); if (preload === im) preload = null; };
+    im.onerror = () => { if (preload === im) preload = null; };
+    im.src = hi;
+  }
+
+  // Ken Burns restart and fade in on top of the old layer
+  el.classList.remove("kb-a", "kb-b"); void el.offsetWidth;
+  el.classList.add(layer ? "kb-a" : "kb-b");
+  el.style.zIndex = "2"; old.style.zIndex = "1";
+  el.classList.add("on");
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    if (slides[layer] !== el) return;
+    old.classList.add("snap"); old.classList.remove("on"); void old.offsetWidth; old.classList.remove("snap");
+    old.classList.remove("kb-a", "kb-b");
+  }, FADE_MS + 80);
+}
+
+/* ---------- Robustness ---------- */
+// Wake from sleep or tab switch: advance now and poll now. Timers that were frozen fire late but only once.
+document.addEventListener("visibilitychange", () => { if (!document.hidden) resync(); });
+function resync() {
+  if (mode === "show") { clearTimeout(slideTimer); advance(); }
+  poll();
+}
+// Watchdog, one interval created once: if a slide overstays (lost timer), move on; keep the stale note honest.
+setInterval(() => {
+  if (mode === "show" && Date.now() - shownAt > currentHold * 2 + 5000) advance();
+  updateStale();
+}, 5000);
+
+// Hide the cursor after a few seconds without movement.
+function cursorSeen() {
+  document.body.classList.remove("nocursor");
+  clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(() => document.body.classList.add("nocursor"), 3000);
+}
+document.addEventListener("mousemove", cursorSeen, { passive: true });
+
+/* ---------- Boot ---------- */
+(async function boot() {
+  const ok = await gate();
+  if (!ok) { $("locked").hidden = false; return; }
+  $("empty").hidden = false;
+  cursorSeen();
+  poll();
+})();
+</script>
+</body>
+</html>
