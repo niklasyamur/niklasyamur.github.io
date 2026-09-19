@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Wall of Love · Niklas & Yağmur Fan Club</title>
+<title>Fan Wall · Niklas & Yağmur Fan Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
 <style>
@@ -62,6 +62,7 @@
   .cap .tag { display: inline-flex; align-items: center; gap: .5em; background: var(--heart); color: #fff; font-size: clamp(.68rem, .8vw, .9rem); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; padding: .45em 1em .42em; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
   .cap .name { font-family: var(--serif); font-size: clamp(2rem, 3.8vw, 4.2rem); line-height: 1.02; color: var(--cream); text-shadow: 0 2px 18px rgba(0,0,0,.5); overflow-wrap: anywhere; }
   .cap .vote { font-size: clamp(.92rem, 1.15vw, 1.25rem); color: var(--priory-100); text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+  .cap .note { font-size: clamp(.95rem, 1.25vw, 1.4rem); font-style: italic; color: var(--cream); text-shadow: 0 1px 10px rgba(0,0,0,.6); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cap .vote .ico { margin-right: .4em; }
 
   /* Slow drift so a static screen never looks frozen. Two directions alternate between layers. */
@@ -77,6 +78,31 @@
   #corner .badge { width: 34%; box-shadow: none; border: 1px solid var(--hairline); margin-bottom: 2px; }
   #corner .join { font-size: clamp(.72rem, .82vw, .95rem); }
   #corner .stale { font-size: .62rem; color: var(--muted); text-align: center; line-height: 1.3; }
+
+  /* ----- Grid gallery, the landing view guests are redirected to ----- */
+  #gridview { position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: clamp(18px, 3vh, 36px) clamp(16px, 3vw, 44px) clamp(28px, 7vh, 64px); }
+  .ghead { display: grid; justify-items: center; gap: clamp(8px, 1.6vh, 18px); text-align: center; margin: 0 0 clamp(16px, 3vh, 32px); }
+  .ghead h1 { font-size: clamp(1.9rem, 5vh, 3.4rem); }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 4px; }
+  .btn { font-family: var(--sans); font-size: clamp(.95rem, 1.05vw, 1.1rem); font-weight: 600; line-height: 1.2; padding: .85em 1.6em; border-radius: 999px; border: 1px solid var(--priory-300); background: transparent; color: var(--cream); text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .btn.primary { background: var(--heart); border-color: var(--heart); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .btn:focus-visible { outline: 3px solid var(--sage-300); outline-offset: 3px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: clamp(10px, 1.6vw, 20px); }
+  @media (min-width: 820px) { .tiles { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
+  .tile { position: relative; margin: 0; background: var(--priory-800); border-radius: 6px; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.28); }
+  .tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--priory-700); }
+  .tile .nybadge { position: absolute; top: 8px; left: 8px; width: 30px; height: 30px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+  .tile .nybadge svg { width: 76%; height: 76%; display: block; }
+  .tile figcaption { display: grid; gap: 3px; padding: 10px 12px 12px; }
+  .tile .tname { font-family: var(--serif); font-size: 1.15rem; line-height: 1.15; color: var(--cream); overflow-wrap: anywhere; }
+  .tile .tnote { font-size: .85rem; font-style: italic; color: var(--priory-200); overflow-wrap: anywhere; }
+  /* The empty state now sits inside the grid, so the two buttons stay reachable. */
+  .emptybox { display: grid; place-items: center; padding: clamp(16px, 5vh, 56px) 0; }
+  /* Close control for the slideshow, next to the cursor-free chrome. */
+  #closeShow { position: fixed; top: clamp(14px, 2.4vh, 28px); right: clamp(16px, 2.4vw, 40px); z-index: 6; padding: .6em 1.2em; background: rgba(43,39,34,.6); }
+  /* The corner QR stays on both views; on a phone it would cover the grid, so it hides there. */
+  @media (min-width: 701px) { body.gridmode #gridview { padding-bottom: 300px; } }
+  @media (max-width: 700px) { body.gridmode #corner { display: none !important; } }
 
   @media (prefers-reduced-motion: reduce) {
     :root { --fade: 400ms; }
@@ -115,19 +141,28 @@
   </div>
 </section>
 
-<!-- Empty state, before the first guest uploads -->
-<section class="screen" id="empty" hidden>
-  <div class="stack">
-    <div class="badge" aria-label="I love NY button"><svg viewBox="0 0 96.9767 96.9767" aria-hidden="true"><use href="#sym-logo"/></svg></div>
+<!-- Grid gallery: the landing view. The empty state lives inside it, before the first guest uploads. -->
+<main id="gridview" hidden>
+  <header class="ghead">
     <p class="kicker">The I ♥ NY Fan Club presents</p>
-    <h1>Niklas &amp; Yağmur<br>Wall of Love</h1>
-    <p class="lede">Grab a button, take a selfie, and your New York portrait shows up here.</p>
-    <div class="plate">
-      <svg class="qr" viewBox="0 0 312 312" role="img" aria-label="QR code to the fan club page"><use href="#sym-qr"/></svg>
-      <p class="join">Scan to join the fan club</p>
+    <h1>Niklas &amp; Yağmur<br>Fan Wall</h1>
+    <div class="actions">
+      <button class="btn primary" id="startBtn" type="button">Start slideshow</button>
+      <a class="btn" id="addBtn" href="index.html">Add your photo</a>
     </div>
-  </div>
-</section>
+  </header>
+  <section class="emptybox" id="empty" hidden>
+    <div class="stack">
+      <div class="badge" aria-label="I love NY button"><svg viewBox="0 0 96.9767 96.9767" aria-hidden="true"><use href="#sym-logo"/></svg></div>
+      <p class="lede">Grab a button, take a selfie, and your New York portrait shows up here.</p>
+      <div class="plate">
+        <svg class="qr" viewBox="0 0 312 312" role="img" aria-label="QR code to the fan club page"><use href="#sym-qr"/></svg>
+        <p class="join">Scan to join the fan club</p>
+      </div>
+    </div>
+  </section>
+  <div class="tiles" id="tiles"></div>
+</main>
 
 <!-- Slideshow: two layers that alternate, the incoming one fades in on top -->
 <div id="stage" hidden aria-live="off">
@@ -135,17 +170,19 @@
     <img class="bg" alt="" aria-hidden="true" decoding="async">
     <img class="pic" alt="" decoding="async">
     <div class="shade"></div>
-    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="vote"></span></div>
+    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="note"></span><span class="vote"></span></div>
   </div>
   <div class="slide" id="slideB">
     <img class="bg" alt="" aria-hidden="true" decoding="async">
     <img class="pic" alt="" decoding="async">
     <div class="shade"></div>
-    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="vote"></span></div>
+    <div class="cap"><span class="tag" hidden></span><span class="name"></span><span class="note"></span><span class="vote"></span></div>
   </div>
 </div>
 
-<p class="brand" id="brand" hidden>Niklas &amp; Yağmur <span class="heart">♥</span> Wall of Love</p>
+<p class="brand" id="brand" hidden>Niklas &amp; Yağmur <span class="heart">♥</span> Fan Wall</p>
+
+<button class="btn" id="closeShow" type="button" hidden aria-label="Close the slideshow">✕ Close</button>
 
 <div class="plate" id="corner" hidden>
   <div class="badge" aria-hidden="true"><svg viewBox="0 0 96.9767 96.9767"><use href="#sym-logo"/></svg></div>
@@ -238,7 +275,10 @@ let entries = [];             // known.values() as an array
 let history = [];             // keys of recently shown photos, bounded by HISTORY_MAX
 let burstQueue = [];          // [{e, label}] new arrivals waiting for their moment, bounded by BURST_QUEUE_MAX
 let firstPollDone = false;    // the first good poll seeds the pool silently, only later arrivals burst
-let mode = "empty";           // "empty" | "show"
+let mode = "grid";            // "grid" (landing gallery) | "show" (slideshow)
+let pageKey = "";             // the key this page was opened with, reused for the link back to the main page
+const AUTOSHOW = new URLSearchParams(location.search).get("show") === "1";  // laptop bookmark: wall.html?k=...&show=1
+const tileNodes = new Map();  // entry key -> grid tile, so a poll never reloads photos already on screen
 let layer = 0;                // which of the two slide layers is on screen
 let slideGen = 0;             // bumps per slide, so late image loads for an old slide are ignored
 let slideTimer = null, fadeTimer = null, pollTimer = null, cursorTimer = null;
@@ -262,7 +302,7 @@ async function gate() {
   if (!CFG.keyHash) return true;
   const h = key ? await sha256(key) : null;
   const ok = h === CFG.keyHash;
-  if (ok) { try { sessionStorage.setItem("fanclub_k", key); } catch (e) {} }
+  if (ok) { pageKey = key; try { sessionStorage.setItem("fanclub_k", key); } catch (e) {} }
   return ok;
 }
 
@@ -299,14 +339,15 @@ function ingest(list) {
     const styled = !!(edited && url === edited);
     let e = known.get(key);
     if (!e) {
-      e = { key, url, edited, styled, name: String(s.name || "").trim(), vote: String(s.vote || ""), dead: false,
+      e = { key, url, edited, styled, name: String(s.name || "").trim(), note: String(s.note || "").trim(), vote: String(s.vote || ""), dead: false,
             freshAt: firstPollDone ? now : parseTs(s.ts, now) };
       if (firstPollDone) fresh.push({ e, label: "Just joined the fan club" });
     } else {
       e.name = String(s.name || e.name || "").trim();
+      e.note = String(s.note || e.note || "").trim();
       e.vote = String(s.vote || "");
       if (e.url !== url) { e.url = url; e.dead = false; }
-      // The guest picked their freshly styled portrait: treat it like a new arrival, that is the moment the wall is for.
+      // The portrait just finished rendering: treat it like a new arrival, that is the moment the wall is for.
       if (styled && !e.styled && firstPollDone) { e.freshAt = now; fresh.push({ e, label: "Fresh from the stylist" }); }
       e.edited = edited; e.styled = styled;
     }
@@ -322,10 +363,13 @@ function ingest(list) {
   if (nextPick && !known.has(nextPick.key)) nextPick = null;
 
   if (entries.some(e => !e.dead)) {
-    if (mode !== "show") startShow();
-    else if (fresh.length) interruptSoon();
+    if (mode === "show") { if (fresh.length) interruptSoon(); }
+    else if (AUTOSHOW) startShow();   // only the bookmarked laptop view auto-starts
+    else renderGrid();                // a poll must never pull a browsing guest out of the grid
   } else if (mode === "show") {
     showEmpty();
+  } else {
+    renderGrid();                     // keeps the empty state honest
   }
 }
 
@@ -333,19 +377,93 @@ function updateStale() {
   $("stale").hidden = !(lastGood && Date.now() - lastGood > STALE_MS);
 }
 
-/* ---------- Show ---------- */
-function showEmpty() {
-  mode = "empty";
+/* ---------- Grid gallery ---------- */
+/* Keyed rendering: tiles are reused across polls, so photos already on screen never reload. */
+function renderGrid() {
+  const host = $("tiles");
+  const seen = new Set();
+  for (const e of entries) {          // backend order, newest first
+    if (e.dead) continue;
+    seen.add(e.key);
+    let t = tileNodes.get(e.key);
+    if (!t) {
+      t = document.createElement("figure");
+      t.className = "tile";
+      const img = document.createElement("img");
+      img.loading = "lazy"; img.decoding = "async"; img.alt = "";
+      img.onerror = () => { t.hidden = true; };
+      const badge = document.createElement("span");
+      badge.className = "nybadge"; badge.setAttribute("aria-hidden", "true");
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 0 96.9767 96.9767");
+      const use = document.createElementNS(NS, "use");
+      use.setAttribute("href", "#sym-logo");
+      svg.append(use); badge.append(svg);
+      const cap = document.createElement("figcaption");
+      const nm = document.createElement("span"); nm.className = "tname";
+      const nt = document.createElement("span"); nt.className = "tnote";
+      cap.append(nm, nt);
+      t.append(img, badge, cap);
+      tileNodes.set(e.key, t);
+    }
+    const img = t.querySelector("img");
+    if (img.getAttribute("src") !== e.url) { t.hidden = false; img.src = e.url; }
+    const nm = t.querySelector(".tname"), nt = t.querySelector(".tnote");
+    nm.textContent = e.name || "";    // guest text, textContent only
+    nm.hidden = !e.name;
+    nt.textContent = e.note || "";    // guest text, textContent only
+    nt.hidden = !e.note;
+    host.append(t);                   // appending in order reorders without reloading images
+  }
+  for (const [k, t] of Array.from(tileNodes)) if (!seen.has(k)) { t.remove(); tileNodes.delete(k); }
+  const none = seen.size === 0;
+  $("empty").hidden = !none;
+  if (mode === "grid") $("corner").hidden = none;   // the empty state carries its own QR, no need for two
+}
+
+function showGrid() {
+  mode = "grid";
   clearTimeout(slideTimer); clearTimeout(fadeTimer);
   current = null; nextPick = null;
-  $("stage").hidden = true; $("corner").hidden = true; $("brand").hidden = true;
-  $("empty").hidden = false;
+  document.body.classList.add("gridmode");
+  document.body.classList.remove("nocursor");
+  $("stage").hidden = true; $("brand").hidden = true; $("closeShow").hidden = true;
+  $("corner").hidden = false;
+  $("gridview").hidden = false;
+  renderGrid();
 }
+
+/* Fullscreen is a nice-to-have: ask for it, carry on wherever the browser says no. */
+function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+function enterShow() {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) { try { const r = req.call(el); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  if (entries.some(e => !e.dead)) startShow(); else showGrid();
+}
+function exitShow() {
+  if (mode !== "show") return;
+  if (fsElement()) {
+    const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (ex) { try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  }
+  showGrid();
+}
+// Three ways out, one handler: the close button, Escape, and the browser leaving fullscreen by itself.
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" || ev.key === "Esc") exitShow(); });
+document.addEventListener("fullscreenchange", () => { if (!fsElement() && mode === "show") exitShow(); });
+document.addEventListener("webkitfullscreenchange", () => { if (!fsElement() && mode === "show") exitShow(); });
+
+/* ---------- Show ---------- */
+// No photos left while the show runs: fall back to the grid, which carries the empty state.
+function showEmpty() { showGrid(); }
 
 function startShow() {
   mode = "show";
-  $("empty").hidden = true;
-  $("stage").hidden = false; $("corner").hidden = false; $("brand").hidden = false;
+  $("gridview").hidden = true;
+  document.body.classList.remove("gridmode");
+  $("stage").hidden = false; $("corner").hidden = false; $("brand").hidden = false; $("closeShow").hidden = false;
   advance();
 }
 
@@ -398,10 +516,12 @@ function showSlide(e, label) {
   // Caption (the outgoing layer's caption fades out at once, so two captions never overlap)
   const cap = el.querySelector(".cap");
   cap.classList.remove("out"); old.querySelector(".cap").classList.add("out");
-  const tag = cap.querySelector(".tag"), name = cap.querySelector(".name"), vote = cap.querySelector(".vote");
+  const tag = cap.querySelector(".tag"), name = cap.querySelector(".name"), vote = cap.querySelector(".vote"), note = cap.querySelector(".note");
   tag.hidden = !label; tag.textContent = label ? (e.name ? `${label} · ${e.name}` : label) : "";
   name.textContent = e.name || "";
   name.hidden = !e.name;
+  note.textContent = e.note || "";      // guest text, textContent only
+  note.hidden = !e.note;
   const v = VOTES[e.vote];
   vote.hidden = !v;
   vote.textContent = "";
@@ -460,7 +580,7 @@ setInterval(() => {
 function cursorSeen() {
   document.body.classList.remove("nocursor");
   clearTimeout(cursorTimer);
-  cursorTimer = setTimeout(() => document.body.classList.add("nocursor"), 3000);
+  cursorTimer = setTimeout(() => { if (mode === "show") document.body.classList.add("nocursor"); }, 3000);
 }
 document.addEventListener("mousemove", cursorSeen, { passive: true });
 
@@ -468,7 +588,11 @@ document.addEventListener("mousemove", cursorSeen, { passive: true });
 (async function boot() {
   const ok = await gate();
   if (!ok) { $("locked").hidden = false; return; }
-  $("empty").hidden = false;
+  // Back to the main page with the same key, so the next guest at the table can start over.
+  $("addBtn").href = pageKey ? `index.html?k=${encodeURIComponent(pageKey)}` : "index.html";
+  $("startBtn").addEventListener("click", enterShow);
+  $("closeShow").addEventListener("click", exitShow);
+  showGrid();
   cursorSeen();
   poll();
 })();

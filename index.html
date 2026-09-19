@@ -154,6 +154,7 @@
   .wall figure { margin: 0; aspect-ratio: 4 / 5; border-radius: var(--radius); overflow: hidden; background: var(--priory-100); position: relative; border: 1px solid var(--hairline); }
   .wall img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .wallhint { font-size: .85rem; color: var(--muted); margin: -2px 0 10px; }
+  .wall-link { margin-top: 12px; text-decoration: none; }
   .wall figure.ai::after { content: "NY"; position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: var(--heart); color: #fff; font-size: 9px; font-weight: 700; display: grid; place-items: center; letter-spacing: .02em; }
   .wall figure { cursor: pointer; }
   .wall figcaption:empty { display: none; }
@@ -165,27 +166,13 @@
   .locked p { color: var(--muted); max-width: 30ch; }
 
   footer { background: var(--priory-900); color: var(--priory-200); padding: 32px 20px 40px; text-align: center; font-size: .85rem; line-height: 1.6; }
+  .foot-link { color: inherit; font-size: .8rem; text-decoration: underline; text-underline-offset: 3px; }
+  .foot-link:hover { color: var(--cream); }
   footer p { max-width: 44ch; margin: 0 auto; }
   footer .serif { font-family: var(--serif); font-size: 1.15rem; color: #fff; margin-bottom: 8px; }
 
   .config-note { border: 1px solid var(--rose-line); background: var(--rose-bg); color: var(--rose-ink); border-radius: var(--radius); padding: 10px 14px; font-size: .9rem; margin-bottom: 20px; }
 
-  /* Stylist pick */
-  .stylist { background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-sm); display: grid; gap: 10px; }
-  .stylist-status { font-size: .92rem; color: var(--muted); }
-  .stylist-status.is-failed { color: var(--rose-ink); }
-  .stylist-hint { font-size: .85rem; color: var(--muted); }
-  .picks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .pick { display: grid; gap: 6px; padding: 6px; border-radius: var(--radius); border: 1px solid var(--priory-200); background: var(--cream); cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--muted); text-align: center; transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease; }
-  .pick img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 2px; display: block; background: var(--priory-100); }
-  .pick[aria-pressed="true"] { border-color: var(--sage-500); background: var(--sage-100); box-shadow: 0 0 0 1px var(--sage-500); color: var(--sage-700); }
-  .pick[aria-pressed="true"] span::after { content: " · on the wall"; font-weight: 400; }
-  /* Stylist wait state */
-  .stylist-wait { display: grid; gap: 10px; }
-  .stylist-bar { height: 4px; border-radius: 2px; background: var(--priory-100); overflow: hidden; }
-  .stylist-bar span { display: block; height: 100%; width: 38%; border-radius: 2px; background: linear-gradient(90deg, var(--sage-300), var(--sage-500), var(--heart)); animation: slide 1.6s ease-in-out infinite alternate; }
-  @keyframes slide { from { transform: translateX(-20%); } to { transform: translateX(200%); } }
-  .stylist-status { min-height: 1.4em; }
 
   /* Lightbox */
   .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(43,39,34,.92); display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; padding: 56px 16px 20px; gap: 14px; }
@@ -194,6 +181,7 @@
   .lb-cap { color: var(--priory-100); font-size: .9rem; display: flex; gap: 10px; align-items: baseline; }
   .lb-cap:empty { display: none; }
   .lb-vote { color: var(--priory-300); font-size: .8rem; }
+  .lb-note { color: var(--priory-100); font-size: .85rem; font-style: italic; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-close { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; font-size: 1.5rem; line-height: 1; cursor: pointer; }
   .lb-close:hover { background: rgba(255,255,255,.18); }
   .lb-tools { display: flex; gap: 8px; }
@@ -255,7 +243,7 @@
       <p class="lede" data-t="hero.lede">Grab a button, wear it tonight, and chip in to give Niklas &amp; Yağmur a wonderful time in New York City.</p>
       <ol class="flow" data-t-attr="aria-label:hero.flowAria">
         <li><span class="n">1</span> <span data-t="hero.step1">Chip in to the NY fund</span></li>
-        <li><span class="n">2</span> <span data-t="hero.step2">Take a selfie for the Wall of Love</span></li>
+        <li><span class="n">2</span> <span data-t="hero.step2">Take a selfie for the Fan Wall</span></li>
         <li><span class="n">3</span> <span data-t="hero.step3">Vote on what to do in New York</span></li>
       </ol>
     </section>
@@ -288,7 +276,7 @@
       <li class="stop wait" id="stop2">
         <span class="bullet" aria-hidden="true"><span>2</span></span>
         <h2 data-t="selfie.h2">Selfie with your button</h2>
-        <p class="hint" data-t="selfie.hint">Optional, goes on the Wall of Love.</p>
+        <p class="hint" data-t="selfie.hint">Optional, goes on the Fan Wall.</p>
         <div class="selfie" id="selfieBox" hidden>
           <label class="frame" id="frame" for="file" data-t="selfie.frame">Tap to open the camera</label>
           <input id="file" type="file" accept="image/*" capture="user" hidden>
@@ -309,6 +297,10 @@
             <label for="name"><span data-t="vote.nameLabel">Your name</span> <span class="opt" data-t="vote.optional">(optional)</span></label>
             <input id="name" type="text" maxlength="60" autocomplete="name" placeholder="So they know who to thank" data-t-attr="placeholder:vote.namePlaceholder">
           </div>
+          <div class="field">
+            <label for="note"><span data-t="vote.noteLabel">A note for Niklas &amp; Yağmur</span> <span class="opt" data-t="vote.optional">(optional)</span></label>
+            <input id="note" type="text" maxlength="240" placeholder="Say something nice" data-t-attr="placeholder:vote.notePlaceholder">
+          </div>
           <button class="btn mt" id="sendBtn" type="button" disabled data-t="vote.send">Send my vote</button>
           <p class="err" id="err" hidden></p>
         </div>
@@ -320,45 +312,30 @@
         <span class="bullet" aria-hidden="true">✓</span>
         <h2 data-t="thanks.h2">You're in the fan club.</h2>
         <p id="thanksText">Thank you. Wear the button, spread the love.</p>
-      </div>
-      <div class="stylist" id="stylist" hidden>
-        <h3 class="wallhead" data-t="stylist.h3">Your fan club portrait</h3>
-        <div class="stylist-wait" id="stylistWait">
-          <div class="stylist-bar" aria-hidden="true"><span></span></div>
-          <p class="stylist-status" id="stylistStatus" aria-live="polite">Pinning a button on you…</p>
-        </div>
-        <div class="picks" id="picks" hidden>
-          <button class="pick" type="button" data-pick="orig" aria-pressed="false">
-            <img id="pickOrigImg" alt="Your original selfie">
-            <span data-t="pick.orig">Original</span>
-          </button>
-          <button class="pick" type="button" data-pick="edited" aria-pressed="true">
-            <img id="pickEditedImg" alt="Your selfie with extra I love NY">
-            <span data-t="pick.edited">Extra I ♥ NY</span>
-          </button>
-        </div>
-        <p class="stylist-hint" id="pickHint" hidden data-t="pick.hint">Tap the other one to put it on the Wall of Love instead.</p>
+        <p id="redirectNote" hidden data-t="thanks.redirect">Taking you to the Fan Wall</p>
       </div>
       <div class="tally" id="tally" hidden>
         <h3 data-t="tally.h3">Fan club vote so far</h3>
         <div id="bars"></div>
       </div>
       <div id="wallBox" hidden>
-        <h3 class="wallhead" data-t="wall.h3">Wall of Love</h3>
+        <h3 class="wallhead" data-t="wall.h3">Fan Wall</h3>
         <p class="wallhint" id="wallHint" hidden data-t="wall.hint">Tap a photo to see it big. Styled portraits carry a red NY badge, you can flip to the original.</p>
         <div class="wall" id="wall"></div>
       </div>
+      <!-- Always visible, so a guest whose automatic redirect is blocked still reaches the Fan Wall with one tap. -->
+      <a class="btn ghost sm wall-link" id="wallLink" href="wall.html" data-t="wall.browse">Browse the Fan Wall</a>
       <button class="link" id="again" type="button" data-t="again">Someone else wants to join? Start over</button>
     </section>
 
   </div>
 </main>
 
-<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Wall of Love photo">
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Fan Wall photo">
   <button class="lb-close" id="lbClose" type="button" data-t-attr="aria-label:lb.close">×</button>
   <figure class="lb-figure">
     <img id="lbImg" alt="">
-    <figcaption class="lb-cap"><span id="lbName"></span><span id="lbVote" class="lb-vote"></span></figcaption>
+    <figcaption class="lb-cap"><span id="lbName"></span><span id="lbVote" class="lb-vote"></span><span id="lbNote" class="lb-note"></span></figcaption>
   </figure>
   <div class="lb-tools" id="lbTools" hidden>
     <button class="lb-toggle" id="lbToggle" type="button" aria-pressed="false" data-t="lb.showOrig">Show original</button>
@@ -367,7 +344,8 @@
 
 <footer>
   <p class="serif" data-t="foot.serif">Niklas &amp; Yağmur · New York, here they come</p>
-  <p data-t="foot.p">The I ♥ NY buttons are a gift to Niklas &amp; Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Wall of Love on this password-protected page.</p>
+  <p data-t="foot.p">The I ♥ NY buttons are a gift to Niklas &amp; Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Fan Wall on this password-protected page.</p>
+  <p><a class="foot-link" id="wallFootLink" href="wall.html" target="_blank" rel="noopener" data-t="wall.footer">♥ Fan Wall</a></p>
 </footer>
 
 <script>
@@ -417,7 +395,7 @@ const I18N = {
     "hero.lede": "Grab a button, wear it tonight, and chip in to give Niklas & Yağmur a wonderful time in New York City.",
     "hero.flowAria": "How it works",
     "hero.step1": "Chip in to the NY fund",
-    "hero.step2": "Take a selfie for the Wall of Love",
+    "hero.step2": "Take a selfie for the Fan Wall",
     "hero.step3": "Vote on what to do in New York",
     "pay.h2": "Please chip in",
     "pay.hint": "A button costs nothing. But an €8 donation adds up fast to a wonderful trip.",
@@ -432,7 +410,7 @@ const I18N = {
     "pay.continue": "Continue",
     "pay.skip": "Just here for the button? Continue anyway, the selfie and the vote are for everyone.",
     "selfie.h2": "Selfie with your button",
-    "selfie.hint": "Optional, goes on the Wall of Love.",
+    "selfie.hint": "Optional, goes on the Fan Wall.",
     "selfie.frame": "Tap to open the camera",
     "selfie.retake": "Retake",
     "selfie.working": "Nice. Your fan club portrait is already in the works.",
@@ -441,6 +419,8 @@ const I18N = {
     "vote.nameLabel": "Your name",
     "vote.optional": "(optional)",
     "vote.namePlaceholder": "So they know who to thank",
+    "vote.noteLabel": "A note for Niklas & Yağmur",
+    "vote.notePlaceholder": "Say something nice",
     "vote.send": "Send my vote",
     "vote.sending": "Sending…",
     "vote.errPhoto": "That photo did not load. Try another one.",
@@ -456,19 +436,11 @@ const I18N = {
     "thanks.plain": "Thank you.",
     "thanks.voted": "Voted: {vote}.",
     "thanks.tail": "Wear the button, spread the love.",
-    "stylist.h3": "Your fan club portrait",
-    "stylist.l1": "Pinning a button on you…",
-    "stylist.l2": "Making sure the heart is properly red…",
-    "stylist.l3": "Raiding the photo booth prop box…",
-    "stylist.l4": "Trying a cap. Or sunglasses. Or a tote bag…",
-    "stylist.l5": "Almost there, the stylist is fussy…",
-    "stylist.busy": "The stylist is busy right now. Your original selfie is on the wall.",
-    "pick.orig": "Original",
-    "pick.edited": "Extra I ♥ NY",
-    "pick.hint": "Tap the other one to put it on the Wall of Love instead.",
+    "thanks.redirect": "Taking you to the Fan Wall",
     "tally.h3": "Fan club vote so far",
-    "wall.h3": "Wall of Love",
+    "wall.h3": "Fan Wall",
     "wall.hint": "Tap a photo to see it big. Styled portraits carry a red NY badge, you can flip to the original.",
+    "wall.browse": "Browse the Fan Wall",
     "again": "Someone else wants to join? Start over",
     "lb.showOrig": "Show original",
     "lb.showEdited": "Show extra I ♥ NY",
@@ -477,7 +449,8 @@ const I18N = {
     "lb.alt": "Fan selfie",
     "lb.altNamed": "Selfie from {name}",
     "foot.serif": "Niklas & Yağmur · New York, here they come",
-    "foot.p": "The I ♥ NY buttons are a gift to Niklas & Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Wall of Love on this password-protected page."
+    "foot.p": "The I ♥ NY buttons are a gift to Niklas & Yağmur. The I ♥ NY Fan Club gifts every donation for the buttons to the couple, for a wonderful time in New York City. Selfies are shared only with the couple and the Fan Wall on this password-protected page.",
+    "wall.footer": "♥ Fan Wall"
   },
   de: {
     "hdr.eyebrow": "Fanclub · seit 19. Sept. 2026",
@@ -489,7 +462,7 @@ const I18N = {
     "hero.lede": "Schnapp dir einen Button, trag ihn heute Abend und gib etwas dazu, damit Niklas & Yağmur eine wundervolle Zeit in New York City haben.",
     "hero.flowAria": "So läuft es",
     "hero.step1": "Etwas in die NY-Kasse geben",
-    "hero.step2": "Selfie für die Wall of Love machen",
+    "hero.step2": "Selfie für die Fan Wall machen",
     "hero.step3": "Abstimmen, was die beiden in New York machen",
     "pay.h2": "Bitte gib etwas dazu",
     "pay.hint": "Ein Button kostet nichts. Aber aus vielen 8 € wird schnell eine wundervolle Reise.",
@@ -504,7 +477,7 @@ const I18N = {
     "pay.continue": "Weiter",
     "pay.skip": "Nur wegen des Buttons hier? Mach trotzdem weiter, Selfie und Abstimmung sind für alle.",
     "selfie.h2": "Selfie mit deinem Button",
-    "selfie.hint": "Freiwillig, kommt auf die Wall of Love.",
+    "selfie.hint": "Freiwillig, kommt auf die Fan Wall.",
     "selfie.frame": "Tippen und Kamera öffnen",
     "selfie.retake": "Nochmal aufnehmen",
     "selfie.working": "Schön. Dein Fanclub-Porträt ist schon in Arbeit.",
@@ -513,6 +486,8 @@ const I18N = {
     "vote.nameLabel": "Dein Name",
     "vote.optional": "(freiwillig)",
     "vote.namePlaceholder": "Damit sie wissen, wem sie danken",
+    "vote.noteLabel": "Eine Nachricht für Niklas & Yağmur",
+    "vote.notePlaceholder": "Sag etwas Nettes",
     "vote.send": "Stimme abschicken",
     "vote.sending": "Wird gesendet…",
     "vote.errPhoto": "Das Foto ließ sich nicht laden. Versuch ein anderes.",
@@ -528,19 +503,11 @@ const I18N = {
     "thanks.plain": "Danke dir.",
     "thanks.voted": "Deine Stimme: {vote}.",
     "thanks.tail": "Trag den Button, verbreite die Liebe.",
-    "stylist.h3": "Dein Fanclub-Porträt",
-    "stylist.l1": "Wir stecken dir einen Button an…",
-    "stylist.l2": "Wir machen das Herz ordentlich rot…",
-    "stylist.l3": "Wir wühlen in der Requisitenkiste…",
-    "stylist.l4": "Cap? Sonnenbrille? Oder doch die Tasche…",
-    "stylist.l5": "Gleich fertig, der Stylist ist pingelig…",
-    "stylist.busy": "Der Stylist ist gerade beschäftigt. Dein Original-Selfie hängt an der Wand.",
-    "pick.orig": "Original",
-    "pick.edited": "Extra I ♥ NY",
-    "pick.hint": "Tipp das andere an, wenn es stattdessen auf die Wall of Love soll.",
+    "thanks.redirect": "Weiter zur Fan Wall",
     "tally.h3": "Zwischenstand der Fanclub-Abstimmung",
-    "wall.h3": "Wall of Love",
+    "wall.h3": "Fan Wall",
     "wall.hint": "Tipp ein Foto an, um es groß zu sehen. Gestylte Porträts tragen ein rotes NY-Abzeichen, du kannst zum Original wechseln.",
+    "wall.browse": "Fan Wall durchstöbern",
     "again": "Will noch jemand mitmachen? Von vorne starten",
     "lb.showOrig": "Original zeigen",
     "lb.showEdited": "Extra I ♥ NY zeigen",
@@ -549,7 +516,8 @@ const I18N = {
     "lb.alt": "Fan-Selfie",
     "lb.altNamed": "Selfie von {name}",
     "foot.serif": "Niklas & Yağmur · Auf nach New York",
-    "foot.p": "Die I ♥ NY Buttons sind ein Geschenk an Niklas & Yağmur. Der I ♥ NY Fanclub schenkt jede Spende für die Buttons dem Paar, für eine wundervolle Zeit in New York City. Selfies sehen nur das Paar und die Wall of Love auf dieser passwortgeschützten Seite."
+    "foot.p": "Die I ♥ NY Buttons sind ein Geschenk an Niklas & Yağmur. Der I ♥ NY Fanclub schenkt jede Spende für die Buttons dem Paar, für eine wundervolle Zeit in New York City. Selfies sehen nur das Paar und die Fan Wall auf dieser passwortgeschützten Seite.",
+    "wall.footer": "♥ Fan Wall"
   },
   tr: {
     "hdr.eyebrow": "Fan kulübü · 19 Eylül 2026",
@@ -561,7 +529,7 @@ const I18N = {
     "hero.lede": "Bir rozet al, bu gece tak ve sen de katkıda bulun ki Niklas & Yağmur New York'ta harika vakit geçirsinler.",
     "hero.flowAria": "Nasıl işliyor",
     "hero.step1": "NY kasasına katkıda bulun",
-    "hero.step2": "Wall of Love için selfie çek",
+    "hero.step2": "Fan Wall için selfie çek",
     "hero.step3": "New York'ta ne yapacaklarına oy ver",
     "pay.h2": "Sen de katkıda bulun",
     "pay.hint": "Rozet bedava. Ama 8 €'luk bağışlar hızla birikir ve harika bir seyahate dönüşür.",
@@ -576,7 +544,7 @@ const I18N = {
     "pay.continue": "Devam",
     "pay.skip": "Sadece rozet için mi geldin? Yine de devam et, selfie ve oylama herkese açık.",
     "selfie.h2": "Rozetinle bir selfie",
-    "selfie.hint": "İsteğe bağlı, Wall of Love'da yerini alır.",
+    "selfie.hint": "İsteğe bağlı, Fan Wall'da yerini alır.",
     "selfie.frame": "Kamerayı açmak için dokun",
     "selfie.retake": "Yeniden çek",
     "selfie.working": "Süper. Fan kulübü portren şimdiden hazırlanıyor.",
@@ -585,6 +553,8 @@ const I18N = {
     "vote.nameLabel": "Adın",
     "vote.optional": "(isteğe bağlı)",
     "vote.namePlaceholder": "Teşekkür edebilsinler diye",
+    "vote.noteLabel": "Niklas ve Yağmur için bir not",
+    "vote.notePlaceholder": "Güzel bir şey yaz",
     "vote.send": "Oyumu gönder",
     "vote.sending": "Gönderiliyor…",
     "vote.errPhoto": "Bu fotoğraf yüklenemedi. Başka birini dene.",
@@ -600,19 +570,11 @@ const I18N = {
     "thanks.plain": "Çok teşekkürler.",
     "thanks.voted": "Oyun: {vote}.",
     "thanks.tail": "Rozeti tak, sevgiyi yay.",
-    "stylist.h3": "Fan kulübü portren",
-    "stylist.l1": "Sana bir rozet takıyoruz…",
-    "stylist.l2": "Kalbin iyice kırmızı olduğundan emin oluyoruz…",
-    "stylist.l3": "Aksesuar kutusunu karıştırıyoruz…",
-    "stylist.l4": "Şapka mı, güneş gözlüğü mü, yoksa bez çanta mı…",
-    "stylist.l5": "Az kaldı, stilist biraz titiz…",
-    "stylist.busy": "Stilist şu an meşgul. Orijinal selfie'n duvarda.",
-    "pick.orig": "Orijinal",
-    "pick.edited": "Ekstra I ♥ NY",
-    "pick.hint": "Wall of Love'a onun yerine diğeri gitsin istiyorsan diğerine dokun.",
+    "thanks.redirect": "Fan Wall'a gidiliyor",
     "tally.h3": "Fan kulübü oylamasında son durum",
-    "wall.h3": "Wall of Love",
+    "wall.h3": "Fan Wall",
     "wall.hint": "Büyütmek için bir fotoğrafa dokun. Stilize portrelerde kırmızı NY rozeti var, orijinaline geçebilirsin.",
+    "wall.browse": "Fan Wall'a göz at",
     "again": "Başka katılmak isteyen var mı? Baştan başla",
     "lb.showOrig": "Orijinali göster",
     "lb.showEdited": "Ekstra I ♥ NY halini göster",
@@ -621,7 +583,8 @@ const I18N = {
     "lb.alt": "Fan selfie'si",
     "lb.altNamed": "{name} selfie'si",
     "foot.serif": "Niklas & Yağmur · New York yolcusu",
-    "foot.p": "I ♥ NY rozetleri Niklas & Yağmur'a bir hediye. I ♥ NY Fan Kulübü, rozetler için toplanan her bağışı çifte armağan ediyor, New York City'de harika vakit geçirsinler diye. Selfie'ler yalnızca çiftle ve bu şifre korumalı sayfadaki Wall of Love'da paylaşılır."
+    "foot.p": "I ♥ NY rozetleri Niklas & Yağmur'a bir hediye. I ♥ NY Fan Kulübü, rozetler için toplanan her bağışı çifte armağan ediyor, New York City'de harika vakit geçirsinler diye. Selfie'ler yalnızca çiftle ve bu şifre korumalı sayfadaki Fan Wall'da paylaşılır.",
+    "wall.footer": "♥ Fan Wall"
   }
 };
 
@@ -999,7 +962,8 @@ $("retake").addEventListener("click", () => { $("file").value = ""; $("file").cl
 async function submit() {
   const btn = $("sendBtn"); btn.disabled = true; btn.textContent = t("vote.sending"); $("err").hidden = true;
   const name = ($("name").value || "").trim().slice(0, 60);
-  const payload = { k: CFG.backendKey, name, vote, selfie: selfieDataUrl, ua: navigator.userAgent.slice(0, 120) };
+  const note = ($("note").value || "").trim().slice(0, 240);   // optional, an empty note is normal and never blocks sending
+  const payload = { k: CFG.backendKey, name, note, vote, selfie: selfieDataUrl, ua: navigator.userAgent.slice(0, 120) };
   let ok = false;
   if (CFG.backend) {
     try {
@@ -1007,7 +971,7 @@ async function submit() {
       let j = null;
       if (entryId) {
         // Step 2: attach the vote (and name) to the row created when the selfie was taken
-        j = await postJson({ k: CFG.backendKey, id: entryId, vote, name });
+        j = await postJson({ k: CFG.backendKey, id: entryId, vote, name, note });
         if (!j.ok && j.error === "not_found") { entryId = null; editPromise = null; j = null; }   // row is gone, send everything instead
       }
       if (!j) j = await postJson(payload);   // no selfie, or step 1 failed: the single call as before
@@ -1024,8 +988,34 @@ async function submit() {
   }
   store("fanclub_done", JSON.stringify({ vote, name: payload.name, id: entryId, selfie: !!selfieDataUrl, ts: Date.now() }));
   showThanks({ ...payload, id: entryId, selfie: !!selfieDataUrl });
+  armWallRedirect();   // send succeeded: confirm, then take the guest to the Fan Wall
 }
 $("sendBtn").addEventListener("click", submit);
+
+/* ---------- Off to the Fan Wall ---------- */
+/**
+ * Only armed after a successful send, never on the reload path through
+ * showThanks(): the thanks screen stays up just long enough to be read, then
+ * the guest is taken to the Fan Wall in the same tab. The background edit
+ * machinery keeps running until then and the backend finishes the portrait
+ * even after this page is gone.
+ */
+const WALL_REDIRECT_MS = 2500;
+let wallRedirectTimer = null;
+
+function armWallRedirect() {
+  $("redirectNote").hidden = false;
+  clearTimeout(wallRedirectTimer);
+  wallRedirectTimer = setTimeout(function () {
+    wallRedirectTimer = null;
+    location.assign(wallHref());
+  }, WALL_REDIRECT_MS);
+}
+
+/** The guest took over: tapped the link themselves, or started over. */
+function cancelWallRedirect() {
+  if (wallRedirectTimer) { clearTimeout(wallRedirectTimer); wallRedirectTimer = null; }
+}
 
 function showThanks(p) {
   $("stop3").classList.add("done");
@@ -1035,105 +1025,45 @@ function showThanks(p) {
   $("thanksText").textContent = thanksLine(p);
   $("thanks").hidden = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
-  if (p && p.id && p.selfie && CFG.backend) { entryId = p.id; runStylist(p.id); }
+  if (p && p.id && p.selfie && CFG.backend) { entryId = p.id; runStylist(p.id); scheduleWallPoll(); }
   loadStats();
 }
 
 
 /* ---------- The stylist: an AI pass that adds more I love NY ---------- */
-async function sendPick(id, pick) {
-  try {
-    await fetch(CFG.backend, { method: "POST", body: JSON.stringify({ k: CFG.backendKey, id, pick }), headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow" });
-  } catch (e) { /* the wall falls back to the original, no need to bother the guest */ }
-}
-
-function showPicks(id, orig, edited) {
-  $("pickOrigImg").src = orig;
-  $("pickEditedImg").src = edited;
-  stopStylistLines();
-  $("stylistWait").hidden = true;
-  $("picks").hidden = false;
-  $("pickHint").hidden = false;
-  const picks = document.querySelectorAll(".pick");
-  // The backend shows the portrait on the wall by default, so press that button from the start.
-  picks.forEach(o => o.setAttribute("aria-pressed", String(o.dataset.pick === "edited")));
-  // Refresh the wall once the default pick is stored, and once more in case the stats read raced the sheet write.
-  sendPick(id, "edited").then(() => loadStats());   // sendPick never rejects
-  setTimeout(loadStats, 3000);
-  // onclick assignment instead of addEventListener: showPicks may run again (resumeStylist), the handler must not stack.
-  picks.forEach(b => {
-    b.onclick = () => {
-      picks.forEach(o => o.setAttribute("aria-pressed", String(o === b)));
-      sendPick(id, b.dataset.pick);
-      setTimeout(loadStats, 400);
-    };
-  });
-}
-
-const STYLIST_LINE_KEYS = ["stylist.l1", "stylist.l2", "stylist.l3", "stylist.l4", "stylist.l5"];
-let stylistTimer = null;
-function startStylistLines() {
-  let i = 0; const el = $("stylistStatus");
-  el.textContent = t(STYLIST_LINE_KEYS[0]);
-  stopStylistLines();
-  stylistTimer = setInterval(() => { i = (i + 1) % STYLIST_LINE_KEYS.length; el.textContent = t(STYLIST_LINE_KEYS[i]); }, 2800);
-}
-function stopStylistLines() { if (stylistTimer) { clearInterval(stylistTimer); stylistTimer = null; } }
-
-let stylistSettled = false;   // picks shown or edit skipped, nothing left to fetch
+let stylistSettled = false;   // a final edit answer is in, nothing left to fetch
 let stylistResumes = 0;       // fresh attempts started by visibilitychange after the chain gave up
 
-/** Puts the stylist box back into its waiting look after a busy message. */
-function clearStylistFailure() {
-  document.querySelector(".stylist-bar").hidden = false;
-  $("stylistStatus").classList.remove("is-failed");
-}
-
-/** Final fallback, shown only once every attempt has been used up. */
-function showStylistBusy() {
-  stopStylistLines();
-  document.querySelector(".stylist-bar").hidden = true;
-  const st = $("stylistStatus");
-  st.textContent = t("stylist.busy");
-  st.classList.add("is-failed");
-}
-
 /**
- * Applies a t=edit answer to the UI. Returns true when the stylist is settled
- * (portrait shown or edit skipped), false when the answer was not usable.
+ * The portrait is made in the background and lands on the wall by itself. The
+ * guest never waits for it, never compares and never chooses, so this renders
+ * nothing: it only keeps the fetch chain alive for the row and refreshes the
+ * wall grid once the answer is in.
  */
-function applyEditResult(id, j) {
-  if (stylistSettled) return true;
-  if (j && j.ok && j.status === "done" && j.edited) {
-    stylistSettled = true;
-    clearStylistFailure();
-    showPicks(id, j.orig, j.edited);
-    return true;
-  }
-  if (j && j.ok && j.status === "skipped") {
-    stylistSettled = true;
-    stopStylistLines();
-    $("stylist").hidden = true;
-    return true;
-  }
-  return false;
-}
-
 async function runStylist(id) {
-  $("stylist").hidden = false;
   // The edit normally started when the selfie was taken, so wait for that promise.
   // Only fetch here when there is none, which is the reload path where the backend
   // answers at once with the stored result.
   const p = (editPromise && editPromise.id === id) ? editPromise : fetchEdit(id);
   editPromise = p;   // so resumeStylist() can find the chain on the reload path too
-  if (!p.result) startStylistLines();   // nothing to animate when the portrait is already here
   try {
-    const j = p.result || await p;      // the wait lines keep rotating while fetchEdit retries
-    if (id !== entryId) return;         // superseded meanwhile
-    if (!applyEditResult(id, j)) showStylistBusy();
-  } catch (e) {
-    showStylistBusy();
-  }
+    const j = p.result || await p;
+    if (id !== entryId) return;   // superseded meanwhile
+    noteEditAnswer(j);
+  } catch (e) { /* nothing to tell the guest, the wall poll keeps looking */ }
+}
+
+/**
+ * Records a final t=edit answer (done, skipped or failed) so the resume logic
+ * and the wall poll know there is nothing left to wait for, and refreshes the
+ * grid so the finished portrait shows up. Renders no stylist UI.
+ */
+function noteEditAnswer(j) {
+  if (stylistSettled) return true;
+  if (!j || !j.ok || j.status === undefined) return false;   // transport trouble or no verdict yet: keep trying
+  stylistSettled = true;
+  loadStats();
+  return true;
 }
 
 /**
@@ -1159,12 +1089,40 @@ function resumeStylist() {
   const id = entryId;
   const fresh = fetchEdit(id);
   editPromise = fresh;
-  fresh.then(j => { if (id === entryId && !$("thanks").hidden) applyEditResult(id, j); });
+  fresh.then(j => { if (id === entryId && !$("thanks").hidden) noteEditAnswer(j); });
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") resumeStylist();
+  if (document.visibilityState === "visible") { resumeStylist(); scheduleWallPoll(); }
+  else stopWallPoll();                                 // no polling while the guest is elsewhere
 });
+
+/**
+ * The portrait is generated after the vote is sent, so the wall grid has to be
+ * refreshed a few times before it can show it, otherwise the first guest of the
+ * evening only ever sees their portrait after a manual reload. Widening
+ * intervals over about two minutes, one tick at a time (wallPollTimer doubles
+ * as the "already running" flag), paused while the page is hidden, and stopped
+ * one refresh after the edit chain reported a final answer.
+ */
+const WALL_POLL_MS = [3000, 5000, 8000, 12000, 18000, 25000, 30000, 30000];
+let wallPollAt = 0;
+let wallPollTimer = null;
+
+function stopWallPoll() { if (wallPollTimer) { clearTimeout(wallPollTimer); wallPollTimer = null; } }
+
+function scheduleWallPoll() {
+  if (wallPollTimer || !CFG.backend || wallPollAt >= WALL_POLL_MS.length) return;
+  if ($("thanks").hidden || document.visibilityState !== "visible") return;
+  wallPollTimer = setTimeout(async () => {
+    wallPollTimer = null;
+    const settledBefore = stylistSettled;
+    resumeStylist();          // a chain that gave up while the row was still being written gets another go
+    await loadStats();
+    if (settledBefore) { wallPollAt = WALL_POLL_MS.length; return; }   // that was the refresh after the final answer
+    scheduleWallPoll();
+  }, WALL_POLL_MS[wallPollAt++]);
+}
 
 
 /* ---------- Lightbox for the fan wall ---------- */
@@ -1187,6 +1145,7 @@ function openLightbox(s) {
   $("lbImg").alt = s.name ? t("lb.altNamed", { name: s.name }) : t("lb.alt");
   $("lbName").textContent = s.name || "";
   $("lbVote").textContent = s.vote ? t("lb.voted", { vote: voteLabel(s.vote) }) : "";
+  $("lbNote").textContent = String((s && s.note) || "").trim();
   const both = !!(s.orig && s.edited);
   $("lbTools").hidden = !both;
   if (both) syncLbToggle();
@@ -1210,6 +1169,9 @@ $("lbToggle").addEventListener("click", () => {
   syncLbToggle();
 });
 
+/** Slideshow page, same gate as this page: hand over the plain key so the guest is not asked again. */
+function wallHref() { return key ? `wall.html?k=${encodeURIComponent(key)}` : "wall.html"; }
+
 async function loadStats() {
   if (!CFG.backend) return;
   try {
@@ -1232,7 +1194,8 @@ async function loadStats() {
         img.src = s.url;
         f.appendChild(img);
         const cap = document.createElement("figcaption");
-        cap.textContent = s.name || "";
+        // Guest text, never markup: the name, and the note behind it when there is one.
+        cap.textContent = [s.name, s.note].map(x => String(x || "").trim()).filter(Boolean).join(" · ");
         f.appendChild(cap);
         if (s.edited && s.url === s.edited) f.classList.add("ai");
         f.addEventListener("click", () => openLightbox(s));
@@ -1261,7 +1224,8 @@ $("copyIban").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText("DE58430609671071079400"); $("copyIban").textContent = t("giro.copied"); setTimeout(() => $("copyIban").textContent = t("giro.copy"), 1800); } catch (e) {}
 });
 $("doneBtn").addEventListener("click", openSteps);
-$("again").addEventListener("click", () => { try { localStorage.removeItem("fanclub_done"); } catch (e) {} location.reload(); });
+$("wallLink").addEventListener("click", cancelWallRedirect);
+$("again").addEventListener("click", () => { cancelWallRedirect(); try { localStorage.removeItem("fanclub_done"); } catch (e) {} location.reload(); });
 
 /* ---------- Boot ---------- */
 (async function boot() {
@@ -1269,6 +1233,8 @@ $("again").addEventListener("click", () => { try { localStorage.removeItem("fanc
   setupPayments(); setupWise(); setupChips();
   const ok = await gate();
   if (!ok) { $("locked").hidden = false; return; }
+  $("wallFootLink").href = wallHref();   // key is known now, the footer link works from the start screen on
+  $("wallLink").href = wallHref();       // thanks screen link, visible from the first guest on, before any stats
   $("content").hidden = false;
   const done = load("fanclub_done");
   if (done) { try { showThanks(JSON.parse(done)); } catch (e) {} }
