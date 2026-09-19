@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Fan Wall admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Tokens copied from wall.html so the admin page reads as the same family. Cream ground here,
+     because this page is read on a phone in daylight and in a dark tent alike. */
+  :root {
+    --cream: #faf7f2; --parchment: #f3ede2; --paper: #ffffff;
+    --ink: #2b2722; --muted: #6f665c; --hairline: #e2d9c9;
+    --priory-50: #f6f4ef; --priory-100: #e9e3d6; --priory-200: #d6cbb4; --priory-300: #bda988; --priory-400: #a98e64;
+    --priory-700: #634d35; --priory-800: #4c3b2c; --priory-900: #3a2e24;
+    --sage-100: #e7ece4; --sage-300: #aebfa3; --sage-500: #6f8466; --sage-700: #4c5c45;
+    --heart: #EE2722;
+    --amber-100: #fbeed2; --amber-700: #8a5a12;
+    --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.45; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  [hidden] { display: none !important; }
+  main { max-width: 640px; margin: 0 auto; padding: 12px 12px 56px; }
+
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 1.7rem; line-height: 1.1; margin: 0; color: var(--priory-900); }
+  h1 .heart { color: var(--heart); }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 1.2rem; margin: 0 0 4px; color: var(--priory-800); }
+  .muted { color: var(--muted); font-size: .85rem; }
+  .small { font-size: .8rem; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0 12px; }
+  header .ver { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+
+  /* Buttons: every tap target is at least 44 px tall. */
+  .btn { font-family: var(--sans); font-size: .95rem; font-weight: 600; line-height: 1.2; min-height: 44px; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--priory-300); background: var(--paper); color: var(--priory-900); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.primary { background: var(--priory-800); border-color: var(--priory-800); color: var(--cream); }
+  .btn.sage { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
+  .btn.danger { color: var(--heart); border-color: var(--heart); }
+  .btn.danger.armed { background: var(--heart); color: #fff; }
+  .btn.ghost { border-color: transparent; background: transparent; color: var(--priory-700); }
+  .btn:focus-visible { outline: 3px solid var(--sage-300); outline-offset: 2px; }
+  .linkbtn { background: none; border: 0; padding: 0; min-height: 44px; font: inherit; font-weight: 600; color: inherit; text-decoration: underline; cursor: pointer; }
+
+  .card { background: var(--paper); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 12px; box-shadow: 0 2px 10px rgba(58,46,36,.06); }
+  .stack { display: grid; gap: 12px; }
+
+  /* Banner for failed requests. Stays until dismissed or the next good answer. */
+  #banner { background: #fbe3e1; border: 1px solid #f0b3ae; color: #7a1e1a; border-radius: var(--radius); padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: .9rem; overflow-wrap: anywhere; }
+  #banner .linkbtn { color: #7a1e1a; }
+  #notice { background: var(--sage-100); border: 1px solid var(--sage-300); color: var(--sage-700); border-radius: var(--radius); padding: 10px 12px; font-size: .9rem; overflow-wrap: anywhere; }
+
+  /* Key form */
+  #keyForm form { display: grid; gap: 10px; }
+  #keyForm .msg { color: var(--heart); font-size: .9rem; min-height: 1.2em; }
+  input, textarea { font: inherit; color: var(--ink); background: var(--cream); border: 1px solid var(--priory-300); border-radius: var(--radius); padding: 10px 12px; width: 100%; min-height: 44px; }
+  input:focus, textarea:focus { outline: 2px solid var(--sage-300); outline-offset: 1px; border-color: var(--sage-500); }
+  textarea { resize: vertical; min-height: 84px; line-height: 1.4; }
+
+  /* Style hint card */
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row .grow { flex: 1 1 auto; }
+  .status { font-size: .85rem; color: var(--sage-700); min-height: 1.2em; overflow-wrap: anywhere; }
+  .status.err { color: var(--heart); }
+  .counter { color: var(--muted); font-size: .78rem; text-align: right; }
+
+  /* Guest cards */
+  #list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .guest { display: grid; grid-template-columns: 96px 1fr; gap: 12px; }
+  .guest.dim { opacity: .62; }
+  .guest .thumb { width: 96px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 4px; background: var(--priory-100); display: block; }
+  .guest .thumb.broken { opacity: .5; }
+  .guest .info { min-width: 0; display: grid; gap: 4px; align-content: start; }
+  .guest .name { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; line-height: 1.15; color: var(--priory-900); overflow-wrap: anywhere; }
+  .guest .name.none { color: var(--muted); font-style: italic; font-weight: 500; }
+  .guest .meta { font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
+  .guest .note { font-style: italic; font-size: .9rem; overflow-wrap: anywhere; color: var(--priory-800); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { display: inline-block; font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; line-height: 1.4; }
+  .pill.done { background: var(--sage-100); color: var(--sage-700); }
+  .pill.pending { background: var(--amber-100); color: var(--amber-700); }
+  .pill.failed { background: #fbe3e1; color: #9a1f1a; }
+  .pill.hidden { background: var(--priory-100); color: var(--priory-700); }
+  .pill.skipped { background: var(--priory-50); color: var(--muted); }
+  .aierr { font-size: .75rem; color: #9a1f1a; overflow-wrap: anywhere; }
+  .guest .actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .guest .working { grid-column: 1 / -1; font-size: .85rem; color: var(--sage-700); min-height: 1.2em; }
+  .guest .working.err { color: var(--heart); }
+  .spin::before { content: ""; display: inline-block; width: .8em; height: .8em; margin-right: .5em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -.1em; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer { margin-top: 16px; color: var(--muted); font-size: .8rem; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  #empty { text-align: center; color: var(--muted); padding: 24px 0; }
+
+  @media (prefers-reduced-motion: reduce) { .spin::before { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Fan Wall <span class="heart" aria-hidden="true">&#9829;</span> admin</h1>
+      <span class="ver" id="version">backend: not loaded yet</span>
+    </div>
+    <button class="btn" id="refreshBtn" type="button" aria-label="Refresh list">&#8635; Refresh</button>
+  </header>
+
+  <div class="stack">
+    <div id="banner" role="alert" hidden>
+      <span id="bannerText"></span>
+      <button class="linkbtn" id="bannerRetry" type="button">Retry</button>
+      <button class="linkbtn" id="bannerClose" type="button">Dismiss</button>
+    </div>
+    <div id="notice" role="status" hidden></div>
+
+    <section class="card" id="keyForm" hidden>
+      <h2>Admin key</h2>
+      <p class="muted">This page needs the admin key. It stays in this browser tab only.</p>
+      <form id="keyFormEl" autocomplete="off">
+        <input type="password" id="keyInput" placeholder="Admin key" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <div class="msg" id="keyMsg"></div>
+        <button class="btn primary" type="submit">Use this key</button>
+      </form>
+    </section>
+
+    <section class="card" id="styleCard">
+      <h2>Portrait style hint</h2>
+      <p class="muted" style="margin:0 0 8px">Steers every portrait generated from now on. Portraits already on the wall stay as they are.</p>
+      <textarea id="styleText" maxlength="300" placeholder="e.g. warm evening light, subtle film grain" aria-label="Style hint"></textarea>
+      <div class="counter"><span id="styleCount">0</span> / 300</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sage" id="styleSave" type="button">Save</button>
+        <button class="btn" id="styleClear" type="button">Clear</button>
+        <span class="status grow" id="styleStatus"></span>
+      </div>
+    </section>
+
+    <input type="search" id="filter" placeholder="Filter by name" aria-label="Filter by name" autocomplete="off" autocapitalize="off">
+
+    <ul id="list" aria-live="polite"></ul>
+    <div id="empty" hidden>Nothing on the wall yet.</div>
+  </div>
+
+  <footer>
+    <span id="countRows">0 rows</span>
+    <span id="countHidden">0 hidden</span>
+    <span id="countShown" hidden></span>
+    <span id="lastRefresh">not refreshed yet</span>
+  </footer>
+</main>
+
+<script>
+"use strict";
+/* ===== Configuration (backend contract version 15) ===== */
+const EXEC = "https://script.google.com/macros/s/AKfycbwSbbUZSqiAoyzUXrqjtIgqUJAZ2JI24D_mJY1w7rQAxJUuqhUTdeybOg5icuRp-n-3/exec";
+const PUBLIC_KEY = "70f65d43437f";       // already public in the guest page
+const KEY_STORE = "fanwall_admin";       // sessionStorage slot for the admin key, never written anywhere else
+const TIMEOUT_MS = 30000;                // list, hide, show, delete, style
+const RETRY_TIMEOUT_MS = 160000;         // portrait retry can take up to 150 s on the backend
+const REFRESH_MS = 45000;                // auto refresh while the page is visible
+const ARM_MS = 4000;                     // how long "Really delete?" stays armed
+
+const $ = id => document.getElementById(id);
+
+/* ===== Admin key ===== */
+let adminKey = "";
+function readKey() {
+  // First open: key arrives as ?a=... and is moved into sessionStorage, then scrubbed from the address bar.
+  let fromUrl = "";
+  try {
+    const p = new URLSearchParams(location.search);
+    fromUrl = (p.get("a") || "").trim();
+    if (p.has("a")) {
+      p.delete("a");
+      const q = p.toString();
+      history.replaceState(null, "", location.pathname + (q ? "?" + q : "") + location.hash);
+    }
+  } catch (e) {}
+  if (fromUrl) { storeKey(fromUrl); return fromUrl; }
+  try { return sessionStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; }
+}
+function storeKey(k) { adminKey = k; try { sessionStorage.setItem(KEY_STORE, k); } catch (e) {} }
+function forgetKey() { adminKey = ""; try { sessionStorage.removeItem(KEY_STORE); } catch (e) {} }
+function showKeyForm(msg) {
+  $("keyMsg").textContent = msg || "";
+  $("keyForm").hidden = false;
+  $("keyInput").value = "";
+  setTimeout(() => { try { $("keyInput").focus(); } catch (e) {} }, 50);
+}
+$("keyFormEl").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const k = $("keyInput").value.trim();
+  if (!k) return;
+  storeKey(k);
+  $("keyForm").hidden = true;
+  loadList();
+});
+
+/* ===== Transport ===== */
+// One error type for everything that goes wrong on the wire, with a short human text.
+class ApiError extends Error {
+  constructor(code, text) { super(text || code); this.code = code; }
+}
+function withTimeout(ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, done: () => clearTimeout(t) };
+}
+async function readJson(resp) {
+  // Apps Script sometimes answers with an HTML page even though the action applied.
+  // That must never be retried blindly, so it becomes its own error code.
+  let text = "";
+  try { text = await resp.text(); } catch (e) { throw new ApiError("net", "Could not read the answer."); }
+  let j = null;
+  try { j = JSON.parse(text); } catch (e) { throw new ApiError("html", "Server answered with a page instead of JSON, reloading list."); }
+  if (!j || typeof j !== "object") throw new ApiError("html", "Server answered with a page instead of JSON, reloading list.");
+  if (j.ok === false) {
+    const code = String(j.error || "error");
+    if (code === "bad_admin") throw new ApiError("bad_admin", "The backend rejected the admin key.");
+    if (code === "admin_not_configured") throw new ApiError("admin_not_configured", "Backend has no admin key yet: set ADMIN_KEY in Apps Script Project Settings, Script properties. No redeploy needed, properties are live.");
+    if (code === "not_found") throw new ApiError("not_found", "That row no longer exists.");
+    throw new ApiError(code, "Backend error: " + code);
+  }
+  return j;
+}
+function netText(e) {
+  if (e instanceof ApiError) return e.message;
+  if (e && e.name === "AbortError") return "No answer in time (weak signal?).";
+  return "Network problem: " + (e && e.message ? e.message : "request failed");
+}
+async function apiGet(query, ms) {
+  const t = withTimeout(ms || TIMEOUT_MS);
+  try {
+    const r = await fetch(EXEC + "?" + query, { method: "GET", redirect: "follow", cache: "no-store", signal: t.signal });
+    return await readJson(r);
+  } finally { t.done(); }
+}
+async function apiPost(body, ms) {
+  const t = withTimeout(ms || TIMEOUT_MS);
+  try {
+    const r = await fetch(EXEC, {
+      method: "POST", redirect: "follow", cache: "no-store", signal: t.signal,
+      headers: { "Content-Type": "text/plain;charset=utf-8" },   // exactly this header keeps Apps Script from preflighting
+      body: JSON.stringify(body),
+    });
+    return await readJson(r);
+  } finally { t.done(); }
+}
+function needKey() {
+  if (adminKey) return true;
+  showKeyForm("");
+  return false;
+}
+// Shared handling for the key related errors. Returns true when it handled the error.
+function handleAuthError(e) {
+  if (!(e instanceof ApiError)) return false;
+  if (e.code === "bad_admin") { forgetKey(); showKeyForm("Key rejected. Please enter the admin key again."); return true; }
+  if (e.code === "admin_not_configured") { showBanner(e.message); return true; }
+  return false;
+}
+
+/* ===== Banner and notice ===== */
+function showBanner(text) { $("bannerText").textContent = text; $("banner").hidden = false; }
+function hideBanner() { $("banner").hidden = true; }
+let noticeTimer = 0;
+function showNotice(text, ms) {
+  $("notice").textContent = text; $("notice").hidden = false;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { $("notice").hidden = true; }, ms || 6000);
+}
+$("bannerClose").addEventListener("click", hideBanner);
+$("bannerRetry").addEventListener("click", () => { hideBanner(); loadList(); });
+
+/* ===== State ===== */
+let rows = [];                       // last good list, newest first as the backend sends it
+const cards = new Map();             // id to card element
+const busy = new Set();              // ids with a request in flight
+let armed = null;                    // { id, timer } while a delete button shows "Really delete?"
+let listSeq = 0;                     // drops answers of superseded list requests
+let refreshTimer = 0;
+let styleLoaded = false;             // prefill the textarea only once, never over the user's typing
+
+/* ===== List ===== */
+async function loadList(opts) {
+  if (!needKey()) return;
+  const my = ++listSeq;
+  const quiet = opts && opts.quiet;
+  const btn = $("refreshBtn");
+  btn.disabled = true; btn.classList.add("spin");
+  try {
+    const j = await apiGet("a=" + encodeURIComponent(adminKey) + "&t=admin");
+    if (my !== listSeq) return;
+    if (!Array.isArray(j.rows)) throw new ApiError("shape", "Unexpected answer from the backend.");
+    rows = j.rows.filter(r => r && typeof r === "object" && r.id != null);
+    hideBanner();
+    $("version").textContent = "backend v" + String(j.version != null ? j.version : "?") + (j.total != null ? ", " + j.total + " total" : "");
+    if (typeof j.style === "string" && (!styleLoaded || document.activeElement !== $("styleText"))) {
+      $("styleText").value = j.style; styleLoaded = true; updateStyleCount();
+    }
+    render();
+    $("lastRefresh").textContent = "refreshed " + hhmmss(new Date());
+  } catch (e) {
+    if (my !== listSeq) return;
+    if (!handleAuthError(e)) {
+      if (e instanceof ApiError && e.code === "html") showBanner(e.message.replace(", reloading list.", ". Tap Retry."));
+      else if (!quiet || !rows.length) showBanner(netText(e));
+      else showBanner("Refresh failed, showing the last list. " + netText(e));
+    }
+  } finally {
+    if (my === listSeq) { btn.disabled = false; btn.classList.remove("spin"); }
+    scheduleRefresh();
+  }
+}
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  if (document.hidden) return;
+  refreshTimer = setTimeout(() => loadList({ quiet: true }), REFRESH_MS);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) clearTimeout(refreshTimer);
+  else loadList({ quiet: true });
+});
+$("refreshBtn").addEventListener("click", () => loadList());
+
+/* ===== Rendering ===== */
+function hhmm(ts) {
+  const t = Date.parse(ts || "");
+  if (!Number.isFinite(t)) return String(ts || "");
+  const d = new Date(t);
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function hhmmss(d) { return hhmm(d.toISOString()) + ":" + String(d.getSeconds()).padStart(2, "0"); }
+function aiState(r) {
+  const s = String(r.aiStatus || "").toLowerCase();
+  if (s === "failed") return "failed";
+  if (s === "done") return "done";
+  if (s === "skipped") return "skipped";
+  return "pending";
+}
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;   // textContent only, guest text is untrusted
+  return n;
+}
+
+function render() {
+  const list = $("list");
+  const seen = new Set();
+  let prev = null;
+  for (const r of rows) {
+    const id = String(r.id);
+    seen.add(id);
+    let li = cards.get(id);
+    if (!li) { li = buildCard(id); cards.set(id, li); }
+    if (!busy.has(id)) updateCard(li, r);
+    // Keep DOM order equal to backend order (newest first) without rebuilding cards.
+    const want = prev ? prev.nextSibling : list.firstChild;
+    if (want !== li) list.insertBefore(li, want);
+    prev = li;
+  }
+  for (const [id, li] of cards) {
+    if (!seen.has(id) && !busy.has(id)) { li.remove(); cards.delete(id); }
+  }
+  applyFilter();
+  updateCounts();
+}
+
+function buildCard(id) {
+  const li = el("li", "card guest");
+  li.dataset.id = id;
+  const img = el("img", "thumb");
+  img.loading = "lazy"; img.decoding = "async"; img.alt = "";
+  img.addEventListener("error", () => {
+    // First failure: fall back to the original upload. Second failure: keep the placeholder.
+    const fb = img.dataset.fallback;
+    if (fb && img.src !== fb) { img.dataset.fallback = ""; img.src = fb; }
+    else { img.removeAttribute("src"); img.classList.add("broken"); }
+  });
+  const info = el("div", "info");
+  info.append(el("div", "name"), el("div", "meta"), el("div", "note"), el("div", "pills"), el("div", "aierr"));
+  const actions = el("div", "actions");
+  const bHide = el("button", "btn", "Hide"); bHide.type = "button"; bHide.dataset.act = "hide";
+  const bRetry = el("button", "btn", "Retry portrait"); bRetry.type = "button"; bRetry.dataset.act = "retry";
+  const bDel = el("button", "btn danger", "Delete"); bDel.type = "button"; bDel.dataset.act = "delete";
+  actions.append(bHide, bRetry, bDel);
+  const working = el("div", "working");
+  li.append(img, info, actions, working);
+  li.addEventListener("click", onCardClick);
+  return li;
+}
+
+function updateCard(li, r) {
+  li._row = r;
+  const img = li.querySelector(".thumb");
+  const url = String(r.url || r.orig || "");
+  const orig = String(r.orig || "");
+  if (img.dataset.src !== url) {
+    img.dataset.src = url;
+    img.dataset.fallback = orig && orig !== url ? orig : "";
+    img.classList.remove("broken");
+    if (url) img.src = url; else img.removeAttribute("src");
+  }
+  const name = String(r.name || "").trim();
+  const nameEl = li.querySelector(".name");
+  nameEl.textContent = name || "no name";
+  nameEl.classList.toggle("none", !name);
+  li.dataset.name = name.toLowerCase();
+
+  const metaBits = [hhmm(r.ts)];
+  if (r.vote) metaBits.push("vote: " + String(r.vote));
+  li.querySelector(".meta").textContent = metaBits.filter(Boolean).join("  ·  ");
+
+  const note = String(r.note || "").trim();
+  const noteEl = li.querySelector(".note");
+  noteEl.textContent = note; noteEl.hidden = !note;
+
+  const pills = li.querySelector(".pills");
+  pills.replaceChildren();
+  if (r.hidden) pills.append(el("span", "pill hidden", "Hidden"));
+  const st = aiState(r);
+  pills.append(el("span", "pill " + st, st === "done" ? "Done" : st === "failed" ? "Failed" : st === "skipped" ? "Skipped" : "Pending"));
+  const aierr = li.querySelector(".aierr");
+  aierr.textContent = st === "failed" && r.aiError ? String(r.aiError) : "";
+  aierr.hidden = !aierr.textContent;
+
+  li.classList.toggle("dim", !!r.hidden);
+  li.querySelector('[data-act="hide"]').textContent = r.hidden ? "Show" : "Hide";
+  li.querySelector('[data-act="retry"]').hidden = st !== "failed";
+  setWorking(li, "");
+}
+
+function setWorking(li, text, isErr) {
+  const w = li.querySelector(".working");
+  w.textContent = text;
+  w.hidden = !text;
+  w.classList.toggle("err", !!isErr);
+  w.classList.toggle("spin", !!text && !isErr);
+}
+function setCardBusy(li, on) {
+  li.querySelectorAll(".actions .btn").forEach(b => { b.disabled = on; });
+}
+
+/* ===== Filter ===== */
+function applyFilter() {
+  const q = $("filter").value.trim().toLowerCase();
+  let shown = 0;
+  for (const li of cards.values()) {
+    const hit = !q || (li.dataset.name || "").includes(q);
+    li.hidden = !hit;
+    if (hit) shown++;
+  }
+  $("empty").hidden = !(cards.size === 0 || shown === 0);
+  $("empty").textContent = cards.size === 0 ? "Nothing on the wall yet." : "No name matches the filter.";
+  const cs = $("countShown");
+  cs.hidden = !q;
+  cs.textContent = q ? shown + " shown" : "";
+}
+$("filter").addEventListener("input", applyFilter);
+
+function updateCounts() {
+  const hidden = rows.filter(r => r.hidden).length;
+  $("countRows").textContent = rows.length + (rows.length === 1 ? " row" : " rows");
+  $("countHidden").textContent = hidden + " hidden";
+}
+
+/* ===== Card actions ===== */
+function disarm() {
+  if (!armed) return;
+  clearTimeout(armed.timer);
+  const li = cards.get(armed.id);
+  if (li) { const b = li.querySelector('[data-act="delete"]'); b.textContent = "Delete"; b.classList.remove("armed"); }
+  armed = null;
+}
+// Any tap outside the armed delete button cancels it.
+document.addEventListener("click", ev => {
+  if (!armed) return;
+  const li = cards.get(armed.id);
+  const b = li && li.querySelector('[data-act="delete"]');
+  if (!b || !b.contains(ev.target)) disarm();
+}, true);
+
+function onCardClick(ev) {
+  const b = ev.target.closest("button[data-act]");
+  if (!b || b.disabled) return;
+  const li = ev.currentTarget;
+  const id = li.dataset.id;
+  const r = li._row || {};
+  if (b.dataset.act === "hide") { disarm(); return doHide(li, id, !r.hidden); }
+  if (b.dataset.act === "retry") { disarm(); return doRetry(li, id); }
+  if (b.dataset.act === "delete") {
+    if (armed && armed.id === id) { disarm(); return doDelete(li, id); }
+    disarm();
+    b.textContent = "Really delete?"; b.classList.add("armed");
+    armed = { id, timer: setTimeout(disarm, ARM_MS) };
+  }
+}
+
+// Wraps one request on one card: locks the buttons, shows the spinner text, handles the odd answers.
+async function cardRequest(li, id, label, fn, onOk) {
+  if (!needKey()) return;
+  busy.add(id); setCardBusy(li, true); setWorking(li, label);
+  try {
+    const j = await fn();
+    setWorking(li, "");
+    onOk(j);
+  } catch (e) {
+    if (e instanceof ApiError && e.code === "html") {
+      // The action usually applied anyway, so do not repeat it: relist and let the list tell the truth.
+      setWorking(li, "");
+      showNotice(e.message, 8000);
+      busy.delete(id); setCardBusy(li, false);
+      return loadList({ quiet: true });
+    }
+    if (e instanceof ApiError && e.code === "not_found") {
+      setWorking(li, "");
+      showNotice("That row is already gone. Reloading list.", 6000);
+      busy.delete(id); setCardBusy(li, false);
+      return loadList({ quiet: true });
+    }
+    if (!handleAuthError(e)) setWorking(li, "Failed: " + netText(e), true);
+    return;
+  } finally {
+    busy.delete(id); setCardBusy(li, false);
+  }
+  loadList({ quiet: true });   // background relist after a success, the card is already updated in place
+}
+
+function doHide(li, id, hidden) {
+  return cardRequest(li, id, hidden ? "Hiding…" : "Showing…",
+    () => apiPost({ a: adminKey, id, hidden }),
+    j => {
+      const r = Object.assign({}, li._row, { hidden: j.hidden != null ? !!j.hidden : hidden });
+      const idx = rows.findIndex(x => String(x.id) === id); if (idx >= 0) rows[idx] = r;
+      updateCard(li, r); updateCounts();
+      showNotice(r.hidden ? "Hidden from the wall." : "Back on the wall.", 3000);
+    });
+}
+function doDelete(li, id) {
+  return cardRequest(li, id, "Deleting…",
+    () => apiPost({ a: adminKey, id, discard: true }),
+    () => {
+      rows = rows.filter(x => String(x.id) !== id);
+      li.remove(); cards.delete(id);
+      applyFilter(); updateCounts();
+      showNotice("Deleted.", 3000);
+    });
+}
+function doRetry(li, id) {
+  return cardRequest(li, id, "Retrying portrait, this can take up to two minutes…",
+    () => apiGet("k=" + encodeURIComponent(PUBLIC_KEY) + "&t=edit&id=" + encodeURIComponent(id), RETRY_TIMEOUT_MS),
+    j => {
+      const status = String(j.status || "").toLowerCase();
+      const r = Object.assign({}, li._row, {
+        aiStatus: status === "done" ? "done" : status === "failed" ? "failed" : status === "skipped" ? "skipped" : li._row.aiStatus,
+        aiError: status === "failed" ? String(j.error || "unknown error") : "",
+      });
+      if (j.orig) r.orig = String(j.orig);
+      if (j.edited) { r.edited = String(j.edited); r.url = r.edited; }
+      const idx = rows.findIndex(x => String(x.id) === id); if (idx >= 0) rows[idx] = r;
+      updateCard(li, r);
+      showNotice(status === "done" ? "Portrait rendered." : status === "failed" ? "Portrait failed again." : "Portrait skipped.", 4000);
+    });
+}
+
+/* ===== Style hint ===== */
+function updateStyleCount() { $("styleCount").textContent = String($("styleText").value.length); }
+$("styleText").addEventListener("input", updateStyleCount);
+async function saveStyle(text) {
+  if (!needKey()) return;
+  const st = $("styleStatus");
+  const btns = [$("styleSave"), $("styleClear")];
+  btns.forEach(b => { b.disabled = true; });
+  st.classList.remove("err"); st.classList.add("spin"); st.textContent = "Saving…";
+  try {
+    const j = await apiPost({ a: adminKey, style: text });
+    st.classList.remove("spin");
+    if (typeof j.style === "string") { $("styleText").value = j.style; updateStyleCount(); }
+    st.textContent = text ? "Saved. Applies to new portraits only." : "Cleared. New portraits use the default style.";
+  } catch (e) {
+    st.classList.remove("spin");
+    if (e instanceof ApiError && e.code === "html") {
+      st.textContent = "Server answered with a page instead of JSON, reloading list.";
+      loadList({ quiet: true });
+    } else if (handleAuthError(e)) {
+      st.textContent = "";
+    } else {
+      st.classList.add("err"); st.textContent = "Not saved: " + netText(e);
+    }
+  } finally {
+    btns.forEach(b => { b.disabled = false; });
+  }
+}
+$("styleSave").addEventListener("click", () => saveStyle($("styleText").value.slice(0, 300).trim()));
+$("styleClear").addEventListener("click", () => { $("styleText").value = ""; updateStyleCount(); saveStyle(""); });
+
+/* ===== Boot ===== */
+(function boot() {
+  adminKey = readKey();
+  if (!adminKey) { showKeyForm(""); return; }
+  loadList();
+})();
+</script>
+</body>
+</html>
